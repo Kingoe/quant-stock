@@ -5,6 +5,7 @@ from app.data.daily_prices import (
     load_daily_prices,
 )
 from app.data.factor_calculators import (
+    calculate_growth_factor,
     calculate_quality_factor,
     calculate_valuation_factor,
 )
@@ -62,6 +63,7 @@ __all__ = [
     "StockBasicRecord",
     "TradingCalendarRecord",
     "ValuationRecord",
+    "calculate_growth_factor",
     "calculate_quality_factor",
     "calculate_valuation_factor",
     "filter_stocks",

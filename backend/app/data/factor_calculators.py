@@ -9,6 +9,52 @@ if TYPE_CHECKING:
 from app.data.factors import get_aligned_financial
 
 
+def calculate_growth_factor(
+    connection: sqlite3.Connection,
+    stock_codes: list[str],
+    score_date: str,
+    revenue_growth_weight: float = 0.5,
+    net_profit_growth_weight: float = 0.5,
+) -> dict[str, float]:
+    """计算成长因子得分
+
+    成长因子包含：
+    - 营收增速: 营收增速越高越好（正常排名）
+    - 净利润增速: 净利润增速越高越好（正常排名）
+
+    权重和默认为 1.0，可根据需要调整。
+    """
+    valid_stocks: dict[str, dict[str, float | None]] = {}
+    for stock_code in stock_codes:
+        financial = get_aligned_financial(connection, stock_code, score_date)
+        if financial:
+            valid_stocks[stock_code] = {
+                "revenue_growth": financial["revenue_growth"],
+                "net_profit_growth": financial["net_profit_growth"],
+            }
+
+    if not valid_stocks:
+        return {}
+
+    revenue_growth_scores = _rank_values(
+        {code: data["revenue_growth"] for code, data in valid_stocks.items()},
+        reverse=False,
+    )
+    net_profit_growth_scores = _rank_values(
+        {code: data["net_profit_growth"] for code, data in valid_stocks.items()},
+        reverse=False,
+    )
+
+    scores: dict[str, float] = {}
+    for stock_code in valid_stocks:
+        scores[stock_code] = (
+            revenue_growth_scores.get(stock_code, 0.5) * revenue_growth_weight
+            + net_profit_growth_scores.get(stock_code, 0.5) * net_profit_growth_weight
+        )
+
+    return scores
+
+
 def calculate_quality_factor(
     connection: sqlite3.Connection,
     stock_codes: list[str],

@@ -2,6 +2,7 @@ from app.data import (
     FinancialRecord,
     StockBasicRecord,
     ValuationRecord,
+    calculate_growth_factor,
     calculate_quality_factor,
     calculate_valuation_factor,
     load_financial_metrics,
@@ -468,3 +469,107 @@ def test_quality_factor_handles_zero_net_profit(tmp_path) -> None:
     assert len(scores) == 2
     assert scores["000001"] >= 0
     assert scores["000001"] <= 1
+
+
+def test_growth_factor_scores_higher_growth_higher(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_stock_basics(
+            connection,
+            [
+                StockBasicRecord("600000", "浦发银行", "SH", "2000-01-01", "银行", False, "active"),
+                StockBasicRecord("000001", "平安银行", "SZ", "2000-01-01", "银行", False, "active"),
+                StockBasicRecord("600519", "贵州茅台", "SH", "2001-08-27", "白酒", False, "active"),
+            ],
+        )
+        load_financial_metrics(
+            connection,
+            [
+                FinancialRecord(
+                    "600000", "2026-03-31", "2026-04-25", 10.0, 30.0, 5.0, 8.0, 1000.0, 500.0
+                ),
+                FinancialRecord(
+                    "000001", "2026-03-31", "2026-04-25", 12.0, 32.0, 10.0, 12.0, 1200.0, 600.0
+                ),
+                FinancialRecord(
+                    "600519", "2026-03-31", "2026-04-25", 25.0, 35.0, 20.0, 25.0, 2500.0, 1250.0
+                ),
+            ],
+        )
+
+        scores = calculate_growth_factor(
+            connection, ["600000", "000001", "600519"], "2026-05-07"
+        )
+
+    assert scores["600519"] > scores["000001"] > scores["600000"]
+
+
+def test_growth_factor_supports_weight_configuration(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_stock_basics(
+            connection,
+            [
+                StockBasicRecord("600000", "浦发银行", "SH", "2000-01-01", "银行", False, "active"),
+                StockBasicRecord("000001", "平安银行", "SZ", "2000-01-01", "银行", False, "active"),
+            ],
+        )
+        load_financial_metrics(
+            connection,
+            [
+                FinancialRecord(
+                    "600000", "2026-03-31", "2026-04-25", 10.0, 30.0, 30.0, 5.0, 1000.0, 500.0
+                ),
+                FinancialRecord(
+                    "000001", "2026-03-31", "2026-04-25", 12.0, 32.0, 5.0, 30.0, 1200.0, 600.0
+                ),
+            ],
+        )
+
+        revenue_only_scores = calculate_growth_factor(
+            connection,
+            ["600000", "000001"],
+            "2026-05-07",
+            revenue_growth_weight=1.0,
+            net_profit_growth_weight=0.0,
+        )
+        profit_only_scores = calculate_growth_factor(
+            connection,
+            ["600000", "000001"],
+            "2026-05-07",
+            revenue_growth_weight=0.0,
+            net_profit_growth_weight=1.0,
+        )
+
+    assert revenue_only_scores["600000"] > revenue_only_scores["000001"]
+    assert profit_only_scores["000001"] > profit_only_scores["600000"]
+
+
+def test_growth_factor_uses_aligned_financial_data(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_stock_basics(
+            connection,
+            [StockBasicRecord("600000", "浦发银行", "SH", "2000-01-01", "银行", False, "active")],
+        )
+        load_financial_metrics(
+            connection,
+            [
+                FinancialRecord(
+                    "600000", "2026-03-31", "2026-04-20", 10.0, 30.0, 5.0, 8.0, 1000.0, 500.0
+                ),
+                FinancialRecord(
+                    "600000", "2026-06-30", "2026-08-10", 12.0, 32.0, 50.0, 60.0, 1200.0, 600.0
+                ),
+            ],
+        )
+
+        scores = calculate_growth_factor(connection, ["600000"], "2026-05-07")
+
+    assert scores["600000"] == 0.5
