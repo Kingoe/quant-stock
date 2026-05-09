@@ -4,6 +4,11 @@ from app.data.daily_prices import (
     get_prices_by_trade_date,
     load_daily_prices,
 )
+from app.data.factors import (
+    get_aligned_daily_price,
+    get_aligned_financial,
+    get_aligned_valuation,
+)
 from app.data.financial import (
     FinancialRecord,
     get_financial_metrics,
@@ -59,6 +64,9 @@ __all__ = [
     "filter_stocks_by_suspension",
     "filter_stocks_by_liquidity",
     "get_active_stock_codes",
+    "get_aligned_daily_price",
+    "get_aligned_financial",
+    "get_aligned_valuation",
     "get_daily_prices",
     "get_data_status",
     "get_financial_metrics",
