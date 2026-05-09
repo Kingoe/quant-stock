@@ -3,6 +3,7 @@ from app.data import (
     IndexConstituentRecord,
     StockBasicRecord,
     filter_stocks,
+    filter_stocks_by_liquidity,
     filter_stocks_by_listing_date,
     filter_stocks_by_suspension,
     get_universe_stock_codes,
@@ -634,3 +635,177 @@ def test_filter_stocks_by_suspension_judges_by_target_date(tmp_path) -> None:
 
     assert result_before == ["000001"]
     assert result_after == ["600000"]
+
+
+def test_filter_stocks_by_liquidity_removes_low_liquidity_stocks(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_daily_prices(
+            connection,
+            _generate_20_days_prices(
+                {
+                    "600000": 10000000,
+                    "000001": 5000000,
+                    "600519": 800000000,
+                    "000002": 1000000,
+                },
+                "2026-04-18",
+            ),
+        )
+
+        result = filter_stocks_by_liquidity(
+            connection, ["600000", "000001", "600519", "000002"], "2026-05-07"
+        )
+
+    assert set(result) == {"600000", "000001", "600519"}
+
+
+def test_filter_stocks_by_liquidity_keeps_all_above_threshold(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_daily_prices(
+            connection,
+            _generate_20_days_prices(
+                {
+                    "600000": 10000000,
+                    "000001": 50000000,
+                    "600519": 800000000,
+                },
+                "2026-04-18",
+            ),
+        )
+
+        result = filter_stocks_by_liquidity(
+            connection, ["600000", "000001", "600519"], "2026-05-07"
+        )
+
+    assert set(result) == {"600000", "000001", "600519"}
+
+
+def test_filter_stocks_by_liquidity_returns_empty_when_all_below_threshold(
+    tmp_path,
+) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_daily_prices(
+            connection,
+            _generate_20_days_prices(
+                {
+                    "600000": 1000000,
+                    "000001": 500000,
+                },
+                "2026-04-18",
+            ),
+        )
+
+        result = filter_stocks_by_liquidity(connection, ["600000", "000001"], "2026-05-07")
+
+    assert result == []
+
+
+def test_filter_stocks_by_liquidity_supports_custom_threshold(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_daily_prices(
+            connection,
+            _generate_20_days_prices(
+                {
+                    "600000": 10000000,
+                    "000001": 5000000,
+                    "600519": 800000000,
+                },
+                "2026-04-18",
+            ),
+        )
+
+        result = filter_stocks_by_liquidity(
+            connection, ["600000", "000001", "600519"], "2026-05-07", threshold=6000000
+        )
+
+    assert set(result) == {"600000", "600519"}
+
+
+def test_filter_stocks_by_liquidity_handles_insufficient_data(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_daily_prices(
+            connection,
+            _generate_20_days_prices(
+                {
+                    "600000": 10000000,
+                    "000001": 5000000,
+                },
+                "2026-04-18",
+            ),
+        )
+
+        result = filter_stocks_by_liquidity(
+            connection, ["600000", "000001", "600519"], "2026-05-07"
+        )
+
+    assert set(result) == {"600000", "000001"}
+
+
+def test_filter_stocks_by_liquidity_calculates_20_day_average(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_daily_prices(
+            connection,
+            _generate_20_days_prices(
+                {
+                    "600000": 10000000,
+                    "000001": 8000000,
+                },
+                "2026-04-18",
+            ),
+        )
+
+        result = filter_stocks_by_liquidity(
+            connection, ["600000", "000001"], "2026-05-07", threshold=9000000
+        )
+
+    assert result == ["600000"]
+
+
+def _generate_20_days_prices(
+    amounts_by_stock: dict[str, float], start_date: str
+) -> list[DailyPriceRecord]:
+    """生成 20 个交易日的价格数据"""
+    from datetime import datetime, timedelta
+
+    records = []
+    base_date = datetime.fromisoformat(start_date)
+
+    for i in range(20):
+        trade_date = (base_date + timedelta(days=i)).isoformat()
+        for stock_code, amount in amounts_by_stock.items():
+            records.append(
+                DailyPriceRecord(
+                    stock_code=stock_code,
+                    trade_date=trade_date,
+                    open_price=10.0,
+                    high_price=11.0,
+                    low_price=9.5,
+                    close_price=10.5,
+                    volume=amount // 10 if amount > 0 else 0,
+                    amount=amount,
+                    adjusted_close=None,
+                    is_suspended=False,
+                    is_limit_up=False,
+                    is_limit_down=False,
+                )
+            )
+
+    return records

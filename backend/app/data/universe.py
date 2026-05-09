@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sqlite3
+from datetime import datetime, timedelta
 
 
 def get_universe_stock_codes(
@@ -66,15 +67,46 @@ def filter_stocks_by_suspension(
     return [row["stock_code"] for row in rows]
 
 
+def filter_stocks_by_liquidity(
+    connection: sqlite3.Connection,
+    stock_codes: list[str],
+    target_date: str,
+    threshold: float = 5000000,
+    window: int = 20,
+) -> list[str]:
+    if not stock_codes:
+        return []
+
+    start_date = _subtract_days(target_date, window - 1)
+    placeholders = ",".join("?" * len(stock_codes))
+    rows = connection.execute(
+        f"""
+        select stock_code, avg(amount) as avg_amount
+        from daily_prices
+        where stock_code in ({placeholders})
+          and trade_date >= ?
+          and trade_date <= ?
+        group by stock_code
+        having avg_amount >= ?
+        """,
+        [*stock_codes, start_date, target_date, threshold],
+    ).fetchall()
+    return [row["stock_code"] for row in rows]
+
+
 def _subtract_months(date_str: str, months: int) -> str:
     """从给定日期减去指定月数，返回格式化的日期字符串"""
-    import datetime
-
-    date = datetime.date.fromisoformat(date_str)
+    date = datetime.fromisoformat(date_str).date()
     year = date.year - (date.month + months - 1) // 12
     month = ((date.month - months - 1) % 12) + 1
     day = min(date.day, _days_in_month(year, month))
-    return datetime.date(year, month, day).isoformat()
+    return datetime.fromisoformat(f"{year}-{month:02d}-{day:02d}").date().isoformat()
+
+
+def _subtract_days(date_str: str, days: int) -> str:
+    """从给定日期减去指定天数，返回格式化的日期字符串"""
+    date = datetime.fromisoformat(date_str).date()
+    return (date - timedelta(days=days)).isoformat()
 
 
 def _days_in_month(year: int, month: int) -> int:
