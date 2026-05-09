@@ -2,6 +2,9 @@
 
 ## 2026-05-09
 
+- 新增停牌过滤模块，支持从股票列表中过滤停牌股票，基于 daily_prices 表的 is_suspended 字段判断，支持按日期判断停牌状态。
+- 新增 filter_stocks_by_suspension 返回非停牌股票列表，基于指定交易日的停牌状态判断。
+- 新增停牌过滤测试，覆盖停牌股票过滤、正常股票保留、全部停牌、基于 is_suspended 字段判断和按目标日期判断。
 - 新增上市时间过滤模块，支持从股票列表中过滤上市不足一年的股票，基于 stocks 表的 list_date 字段判断，支持配置上市月数阈值。
 - 新增 filter_stocks_by_listing_date 返回满足上市时间要求的股票列表。
 - 新增 _subtract_months 辅助函数计算截止日期，_days_in_month 返回月份天数。

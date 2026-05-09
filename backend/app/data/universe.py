@@ -45,6 +45,27 @@ def filter_stocks_by_listing_date(
     return [row["stock_code"] for row in rows]
 
 
+def filter_stocks_by_suspension(
+    connection: sqlite3.Connection,
+    stock_codes: list[str],
+    trade_date: str,
+) -> list[str]:
+    if not stock_codes:
+        return []
+    placeholders = ",".join("?" * len(stock_codes))
+    rows = connection.execute(
+        f"""
+        select stock_code
+        from daily_prices
+        where stock_code in ({placeholders})
+          and trade_date = ?
+          and is_suspended = 0
+        """,
+        [*stock_codes, trade_date],
+    ).fetchall()
+    return [row["stock_code"] for row in rows]
+
+
 def _subtract_months(date_str: str, months: int) -> str:
     """从给定日期减去指定月数，返回格式化的日期字符串"""
     import datetime

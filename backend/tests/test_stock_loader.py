@@ -94,12 +94,8 @@ def test_get_active_stock_codes_returns_only_active_non_st_codes(tmp_path) -> No
         load_stock_basics(
             connection,
             [
-                StockBasicRecord(
-                    "600000", "浦发银行", "SH", "1999-11-10", "银行", False, "active"
-                ),
-                StockBasicRecord(
-                    "000001", "平安银行", "SZ", "1991-04-03", "银行", True, "active"
-                ),
+                StockBasicRecord("600000", "浦发银行", "SH", "1999-11-10", "银行", False, "active"),
+                StockBasicRecord("000001", "平安银行", "SZ", "1991-04-03", "银行", True, "active"),
                 StockBasicRecord(
                     "300750", "宁德时代", "SZ", "2018-06-11", "电力设备", False, "delisted"
                 ),

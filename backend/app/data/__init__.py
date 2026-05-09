@@ -34,6 +34,7 @@ from app.data.trading_calendar import (
 from app.data.universe import (
     filter_stocks,
     filter_stocks_by_listing_date,
+    filter_stocks_by_suspension,
     get_universe_stock_codes,
 )
 from app.data.valuation import (
@@ -52,6 +53,7 @@ __all__ = [
     "ValuationRecord",
     "filter_stocks",
     "filter_stocks_by_listing_date",
+    "filter_stocks_by_suspension",
     "get_active_stock_codes",
     "get_daily_prices",
     "get_data_status",

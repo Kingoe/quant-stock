@@ -27,13 +27,7 @@ class FactorWeights:
     risk_liquidity: float
 
     def validate(self) -> None:
-        total = (
-            self.valuation
-            + self.quality
-            + self.growth
-            + self.momentum
-            + self.risk_liquidity
-        )
+        total = self.valuation + self.quality + self.growth + self.momentum + self.risk_liquidity
         if abs(total - 1.0) > 0.000001:
             raise ConfigError("factor weights must sum to 1")
         for name, value in self.__dict__.items():
