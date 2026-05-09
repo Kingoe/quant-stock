@@ -2,6 +2,8 @@
 
 ## 2026-05-09
 
+- 新增后端依赖配置 `backend/pyproject.toml`，包含 FastAPI、uvicorn、pandas、numpy、pytest 和 ruff。
+- 配置后端 pytest 测试发现规则和 ruff 检查/格式化规则。
 - 创建后端基础目录结构：`backend/app` 和 `backend/tests`。
 - 新增后端说明文档 `backend/README.md`，明确当前后端目录范围和约束。
 - 创建项目初始文档。
