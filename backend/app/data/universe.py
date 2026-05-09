@@ -94,6 +94,30 @@ def filter_stocks_by_liquidity(
     return [row["stock_code"] for row in rows]
 
 
+def filter_stocks_by_abnormal_valuation(
+    connection: sqlite3.Connection,
+    stock_codes: list[str],
+    trade_date: str,
+    max_pe: float = 1000,
+    max_pb: float = 100,
+) -> list[str]:
+    if not stock_codes:
+        return []
+    placeholders = ",".join("?" * len(stock_codes))
+    rows = connection.execute(
+        f"""
+        select stock_code
+        from valuation_metrics
+        where stock_code in ({placeholders})
+          and trade_date = ?
+          and (pe is null or (pe > 0 and pe < ?))
+          and (pb is null or (pb > 0 and pb < ?))
+        """,
+        [*stock_codes, trade_date, max_pe, max_pb],
+    ).fetchall()
+    return [row["stock_code"] for row in rows]
+
+
 def _subtract_months(date_str: str, months: int) -> str:
     """从给定日期减去指定月数，返回格式化的日期字符串"""
     date = datetime.fromisoformat(date_str).date()

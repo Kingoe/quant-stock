@@ -2,7 +2,9 @@ from app.data import (
     DailyPriceRecord,
     IndexConstituentRecord,
     StockBasicRecord,
+    ValuationRecord,
     filter_stocks,
+    filter_stocks_by_abnormal_valuation,
     filter_stocks_by_liquidity,
     filter_stocks_by_listing_date,
     filter_stocks_by_suspension,
@@ -10,6 +12,7 @@ from app.data import (
     load_daily_prices,
     load_index_constituents,
     load_stock_basics,
+    load_valuations,
 )
 from app.storage import initialize_schema, open_sqlite_connection
 
@@ -809,3 +812,148 @@ def _generate_20_days_prices(
             )
 
     return records
+
+
+def test_filter_stocks_by_abnormal_valuation_removes_negative_pe_pb(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_valuations(
+            connection,
+            [
+                ValuationRecord("600000", "2026-05-07", 10.5, 1.5, None, None),
+                ValuationRecord("000001", "2026-05-07", -5.0, 2.0, None, None),
+                ValuationRecord("600519", "2026-05-07", 25.0, 8.0, None, None),
+                ValuationRecord("000002", "2026-05-07", 15.0, -1.0, None, None),
+            ],
+        )
+
+        result = filter_stocks_by_abnormal_valuation(
+            connection, ["600000", "000001", "600519", "000002"], "2026-05-07"
+        )
+
+    assert set(result) == {"600000", "600519"}
+
+
+def test_filter_stocks_by_abnormal_valuation_removes_zero_pe_pb(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_valuations(
+            connection,
+            [
+                ValuationRecord("600000", "2026-05-07", 10.5, 1.5, None, None),
+                ValuationRecord("000001", "2026-05-07", 0.0, 2.0, None, None),
+                ValuationRecord("600519", "2026-05-07", 25.0, 0.0, None, None),
+                ValuationRecord("000002", "2026-05-07", 15.0, 1.2, None, None),
+            ],
+        )
+
+        result = filter_stocks_by_abnormal_valuation(
+            connection, ["600000", "000001", "600519", "000002"], "2026-05-07"
+        )
+
+    assert set(result) == {"600000", "000002"}
+
+
+def test_filter_stocks_by_abnormal_valuation_keeps_all_normal(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_valuations(
+            connection,
+            [
+                ValuationRecord("600000", "2026-05-07", 10.5, 1.5, None, None),
+                ValuationRecord("000001", "2026-05-07", 15.0, 2.0, None, None),
+                ValuationRecord("600519", "2026-05-07", 25.0, 8.0, None, None),
+            ],
+        )
+
+        result = filter_stocks_by_abnormal_valuation(
+            connection, ["600000", "000001", "600519"], "2026-05-07"
+        )
+
+    assert set(result) == {"600000", "000001", "600519"}
+
+
+def test_filter_stocks_by_abnormal_valuation_returns_empty_when_all_abnormal(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_valuations(
+            connection,
+            [
+                ValuationRecord("600000", "2026-05-07", -10.0, 1.5, None, None),
+                ValuationRecord("000001", "2026-05-07", 0.0, 0.0, None, None),
+            ],
+        )
+
+        result = filter_stocks_by_abnormal_valuation(connection, ["600000", "000001"], "2026-05-07")
+
+    assert result == []
+
+
+def test_filter_stocks_by_abnormal_valuation_supports_custom_limits(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_valuations(
+            connection,
+            [
+                ValuationRecord("600000", "2026-05-07", 5.0, 1.0, None, None),
+                ValuationRecord("000001", "2026-05-07", 100.0, 2.0, None, None),
+                ValuationRecord("600519", "2026-05-07", 20.0, 2.5, None, None),
+            ],
+        )
+
+        result = filter_stocks_by_abnormal_valuation(
+            connection, ["600000", "000001", "600519"], "2026-05-07", max_pe=50, max_pb=3
+        )
+
+    assert set(result) == {"600000", "600519"}
+
+
+def test_filter_stocks_by_abnormal_valuation_handles_null_pe_pb(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_valuations(
+            connection,
+            [
+                ValuationRecord("600000", "2026-05-07", 10.5, 1.5, None, None),
+                ValuationRecord("000001", "2026-05-07", None, 2.0, None, None),
+                ValuationRecord("600519", "2026-05-07", 15.0, None, None, None),
+            ],
+        )
+
+        result = filter_stocks_by_abnormal_valuation(
+            connection, ["600000", "000001", "600519"], "2026-05-07"
+        )
+
+    assert set(result) == {"600000", "000001", "600519"}
+
+
+def test_filter_stocks_by_abnormal_valuation_handles_missing_data(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_valuations(
+            connection,
+            [
+                ValuationRecord("600000", "2026-05-07", 10.5, 1.5, None, None),
+                ValuationRecord("000001", "2026-05-07", 15.0, 2.0, None, None),
+            ],
+        )
+
+        result = filter_stocks_by_abnormal_valuation(
+            connection, ["600000", "000001", "600519"], "2026-05-07"
+        )
+
+    assert set(result) == {"600000", "000001"}

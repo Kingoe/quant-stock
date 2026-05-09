@@ -33,6 +33,7 @@ from app.data.trading_calendar import (
 )
 from app.data.universe import (
     filter_stocks,
+    filter_stocks_by_abnormal_valuation,
     filter_stocks_by_liquidity,
     filter_stocks_by_listing_date,
     filter_stocks_by_suspension,
@@ -53,6 +54,7 @@ __all__ = [
     "TradingCalendarRecord",
     "ValuationRecord",
     "filter_stocks",
+    "filter_stocks_by_abnormal_valuation",
     "filter_stocks_by_listing_date",
     "filter_stocks_by_suspension",
     "filter_stocks_by_liquidity",
