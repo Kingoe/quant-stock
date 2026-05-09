@@ -10,6 +10,54 @@ if TYPE_CHECKING:
 from app.data.factors import get_aligned_financial
 
 
+def calculate_risk_factor(
+    connection: sqlite3.Connection,
+    stock_codes: list[str],
+    score_date: str,
+    volatility_weight: float = 0.5,
+    max_drawdown_weight: float = 0.5,
+    lookback_days: int = 120,
+) -> dict[str, float]:
+    """计算风险因子得分
+
+    风险因子包含：
+    - 波动率: 日收益波动越低越好
+    - 最大回撤: 回撤越低越好
+
+    价格优先使用 adjusted_close，缺失时使用 close_price。
+    """
+    valid_stocks: dict[str, dict[str, float | None]] = {}
+    start_date = _subtract_days(score_date, lookback_days)
+    for stock_code in stock_codes:
+        prices = _get_prices_between(connection, stock_code, start_date, score_date)
+        if prices:
+            valid_stocks[stock_code] = {
+                "volatility": _calculate_volatility(prices),
+                "max_drawdown": _calculate_max_drawdown(prices),
+            }
+
+    if not valid_stocks:
+        return {}
+
+    volatility_scores = _rank_values(
+        {code: data["volatility"] for code, data in valid_stocks.items()},
+        reverse=True,
+    )
+    max_drawdown_scores = _rank_non_negative_values(
+        {code: data["max_drawdown"] for code, data in valid_stocks.items()},
+        reverse=True,
+    )
+
+    scores: dict[str, float] = {}
+    for stock_code in valid_stocks:
+        scores[stock_code] = (
+            volatility_scores.get(stock_code, 0.5) * volatility_weight
+            + max_drawdown_scores.get(stock_code, 0.5) * max_drawdown_weight
+        )
+
+    return scores
+
+
 def calculate_momentum_factor(
     connection: sqlite3.Connection,
     stock_codes: list[str],
@@ -201,10 +249,67 @@ def _get_price_on_or_before(
     return row["close_price"]
 
 
+def _get_prices_between(
+    connection: sqlite3.Connection,
+    stock_code: str,
+    start_date: str,
+    end_date: str,
+) -> list[float]:
+    rows = connection.execute(
+        """
+        select close_price, adjusted_close
+        from daily_prices
+        where stock_code = ?
+          and trade_date >= ?
+          and trade_date <= ?
+        order by trade_date
+        """,
+        (stock_code, start_date, end_date),
+    ).fetchall()
+    prices: list[float] = []
+    for row in rows:
+        if row["adjusted_close"] is not None:
+            prices.append(row["adjusted_close"])
+        else:
+            prices.append(row["close_price"])
+    return prices
+
+
 def _calculate_return(current_price: float, previous_price: float | None) -> float | None:
     if previous_price is None or previous_price <= 0:
         return None
     return current_price / previous_price - 1
+
+
+def _calculate_volatility(prices: list[float]) -> float | None:
+    returns = [
+        _calculate_return(current_price, previous_price)
+        for previous_price, current_price in zip(prices, prices[1:], strict=False)
+    ]
+    valid_returns = [value for value in returns if value is not None]
+    if len(valid_returns) < 2:
+        return None
+
+    mean_return = sum(valid_returns) / len(valid_returns)
+    variance = sum((value - mean_return) ** 2 for value in valid_returns) / len(valid_returns)
+    return variance**0.5
+
+
+def _calculate_max_drawdown(prices: list[float]) -> float | None:
+    if len(prices) < 2:
+        return None
+
+    peak = prices[0]
+    max_drawdown = 0.0
+    for price in prices:
+        if price > peak:
+            peak = price
+        if peak <= 0:
+            continue
+        drawdown = 1 - price / peak
+        if drawdown > max_drawdown:
+            max_drawdown = drawdown
+    return max_drawdown
 
 
 def _subtract_days(value: str, days: int) -> str:
@@ -296,6 +401,31 @@ def _rank_values(values: Mapping[str, float | None], reverse: bool) -> dict[str,
         scores[code] = idx / (count - 1)
 
     # 未包含的股票返回 0.5
+    for code in values:
+        if code not in scores:
+            scores[code] = 0.5
+
+    return scores
+
+
+def _rank_non_negative_values(
+    values: Mapping[str, float | None], reverse: bool
+) -> dict[str, float]:
+    """将非负值转换为排名得分，适用于最大回撤等 0 也有效的指标。"""
+    valid_items = [
+        (code, value) for code, value in values.items() if value is not None and value >= 0
+    ]
+
+    if len(valid_items) < 2:
+        return {code: 0.5 for code in values}
+
+    sorted_items = sorted(valid_items, key=lambda item: item[1], reverse=reverse)
+    count = len(sorted_items)
+
+    scores: dict[str, float] = {}
+    for idx, (code, _) in enumerate(sorted_items):
+        scores[code] = idx / (count - 1)
+
     for code in values:
         if code not in scores:
             scores[code] = 0.5

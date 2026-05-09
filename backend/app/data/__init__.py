@@ -8,6 +8,7 @@ from app.data.factor_calculators import (
     calculate_growth_factor,
     calculate_momentum_factor,
     calculate_quality_factor,
+    calculate_risk_factor,
     calculate_valuation_factor,
 )
 from app.data.factors import (
@@ -67,6 +68,7 @@ __all__ = [
     "calculate_growth_factor",
     "calculate_momentum_factor",
     "calculate_quality_factor",
+    "calculate_risk_factor",
     "calculate_valuation_factor",
     "filter_stocks",
     "filter_stocks_by_abnormal_valuation",
