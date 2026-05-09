@@ -22,12 +22,19 @@ from app.data.trading_calendar import (
     get_open_trade_dates,
     load_trading_calendar,
 )
+from app.data.valuation import (
+    ValuationRecord,
+    get_valuation_by_trade_date,
+    get_valuations,
+    load_valuations,
+)
 
 __all__ = [
     "DailyPriceRecord",
     "IndexConstituentRecord",
     "StockBasicRecord",
     "TradingCalendarRecord",
+    "ValuationRecord",
     "get_active_stock_codes",
     "get_daily_prices",
     "get_index_constituents",
@@ -36,8 +43,11 @@ __all__ = [
     "get_open_trade_dates",
     "get_prices_by_trade_date",
     "get_stock",
+    "get_valuation_by_trade_date",
+    "get_valuations",
     "load_daily_prices",
     "load_index_constituents",
     "load_stock_basics",
     "load_trading_calendar",
+    "load_valuations",
 ]
