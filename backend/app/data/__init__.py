@@ -32,6 +32,7 @@ from app.data.trading_calendar import (
     load_trading_calendar,
 )
 from app.data.universe import (
+    filter_st_stocks,
     get_universe_stock_codes,
 )
 from app.data.valuation import (
@@ -48,6 +49,7 @@ __all__ = [
     "StockBasicRecord",
     "TradingCalendarRecord",
     "ValuationRecord",
+    "filter_st_stocks",
     "get_active_stock_codes",
     "get_daily_prices",
     "get_data_status",
