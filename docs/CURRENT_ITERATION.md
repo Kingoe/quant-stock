@@ -4,24 +4,30 @@
 
 ## 当前状态
 
-- 当前阶段：后端基础
-- 当前任务：M1-5 添加健康检查接口
+- 当前阶段：数据底座
+- 当前任务：M2-1 定义数据库表结构
 - 任务来源：按 `docs/TASK_PLAN.md` 的里程碑和任务 ID 顺序推进
-- 对任务顺序的影响：正常进入里程碑 1 的第五个任务
+- 对任务顺序的影响：正常进入里程碑 2 的第一个任务
 
 ## 本轮验收标准
 
 本轮完成必须满足：
 
-- 创建 FastAPI 应用入口 `backend/app/main.py`。
-- 新增 `GET /api/health` 健康检查接口。
-- 健康检查响应遵守 `docs/API_CONVENTIONS.md` 的 `data` + `meta` 格式。
-- 响应 `data.status` 为 `ok`。
-- 响应 `data.service` 为 `quant-stock-backend`。
-- 响应 `meta.generated_at` 为带时区的 ISO 日期时间。
+- 创建 SQLite schema 初始化模块。
+- 定义股票基础信息表。
+- 定义交易日历表。
+- 定义指数成分表。
+- 定义日行情表。
+- 定义估值数据表。
+- 定义财务数据表。
+- 定义策略运行表。
+- 定义调仓建议表。
+- 定义必要唯一约束和查询索引。
+- schema 初始化函数可重复执行。
 - 先写失败测试，再实现代码。
-- 不接入业务数据、数据库表结构或外部数据源。
-- `docs/TASK_PLAN.md` 将 M1-5 标记为 `Done`。
+- 不接入外部数据源。
+- 不写数据加载逻辑。
+- `docs/TASK_PLAN.md` 将 M2-1 标记为 `Done`。
 - `docs/CHANGELOG.md` 记录本轮变更。
 - Git 工作区提交后保持干净。
 
@@ -29,7 +35,7 @@
 
 本轮验证方式：
 
-- 运行 `uv run pytest tests/test_health_api.py`。
+- 运行 `uv run pytest tests/test_storage_schema.py`。
 - 运行 `uv run pytest`。
 - 运行 `uv run ruff check app tests`。
 - 检查任务规划和更新日志是否同步。
@@ -37,10 +43,10 @@
 
 ## 下一轮建议
 
-下一轮开始 M2-1：定义数据库表结构。
+下一轮开始 M2-2：实现交易日历加载。
 
 开始前应先更新本文档：
 
 - 当前阶段改为：数据底座
-- 当前任务改为：M2-1 定义数据库表结构
-- 明确 M2-1 验收标准和验证命令
+- 当前任务改为：M2-2 实现交易日历加载
+- 明确 M2-2 验收标准和验证命令

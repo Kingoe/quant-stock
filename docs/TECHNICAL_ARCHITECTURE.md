@@ -119,6 +119,17 @@ quant-stock/
 - 调仓建议
 - 回测持仓、交易流水、绩效指标
 
+第一版 SQLite schema 已包含：
+
+- `stocks`：股票基础信息。
+- `trading_calendar`：交易日历。
+- `index_constituents`：指数成分。
+- `daily_prices`：日行情和交易状态。
+- `valuation_metrics`：估值数据。
+- `financial_metrics`：财务数据和披露日期。
+- `strategy_runs`：策略运行记录。
+- `rebalance_recommendations`：调仓建议。
+
 ## 6. 股票池规则
 
 第一版基础股票池：中证 800。

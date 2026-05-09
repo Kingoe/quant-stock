@@ -48,7 +48,7 @@
 
 | ID | 任务 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| M2-1 | 定义数据库表结构 | Not Started | 股票、行情、财务、指数成分、策略运行 |
+| M2-1 | 定义数据库表结构 | Done | 已定义 stocks、trading_calendar、index_constituents、daily_prices、valuation_metrics、financial_metrics、strategy_runs、rebalance_recommendations |
 | M2-2 | 实现交易日历加载 | Not Started | 调仓和回测都依赖 |
 | M2-3 | 实现股票基础信息加载 | Not Started | 上市日期、状态、行业 |
 | M2-4 | 实现中证 800 成分股加载 | Not Started | 第一版基础股票池 |
