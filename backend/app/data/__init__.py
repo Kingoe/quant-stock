@@ -4,6 +4,11 @@ from app.data.daily_prices import (
     get_prices_by_trade_date,
     load_daily_prices,
 )
+from app.data.financial import (
+    FinancialRecord,
+    get_financial_metrics,
+    load_financial_metrics,
+)
 from app.data.index_constituents import (
     IndexConstituentRecord,
     get_index_constituents,
@@ -31,12 +36,14 @@ from app.data.valuation import (
 
 __all__ = [
     "DailyPriceRecord",
+    "FinancialRecord",
     "IndexConstituentRecord",
     "StockBasicRecord",
     "TradingCalendarRecord",
     "ValuationRecord",
     "get_active_stock_codes",
     "get_daily_prices",
+    "get_financial_metrics",
     "get_index_constituents",
     "get_latest_index_constituents",
     "get_next_open_trade_date",
@@ -46,6 +53,7 @@ __all__ = [
     "get_valuation_by_trade_date",
     "get_valuations",
     "load_daily_prices",
+    "load_financial_metrics",
     "load_index_constituents",
     "load_stock_basics",
     "load_trading_calendar",
