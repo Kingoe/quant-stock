@@ -42,7 +42,7 @@
 | M1-2 | 添加后端依赖配置 | Done | 已创建 `backend/pyproject.toml`，配置运行依赖、开发依赖、pytest 和 ruff |
 | M1-3 | 添加配置读取模块 | Done | 已支持 TOML 配置读取、默认配置和基础校验 |
 | M1-4 | 添加 SQLite 连接层 | Done | 已支持 SQLite URL 解析、连接创建、目录创建、提交和关闭 |
-| M1-5 | 添加健康检查接口 | Not Started | 用于确认后端正常运行 |
+| M1-5 | 添加健康检查接口 | Done | 已新增 FastAPI 应用入口和 `GET /api/health` |
 
 ## 里程碑 2：数据底座
 

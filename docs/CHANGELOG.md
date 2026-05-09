@@ -2,6 +2,10 @@
 
 ## 2026-05-09
 
+- 新增 FastAPI 应用入口 `backend/app/main.py`。
+- 新增健康检查接口 `GET /api/health`，响应遵守 `data` + `meta` 格式。
+- 新增健康检查接口测试。
+- 为 FastAPI `TestClient` 补充开发依赖 `httpx`。
 - 新增 SQLite 存储连接层，支持 `sqlite:///...` URL 解析、连接创建、父目录自动创建、提交、回滚和关闭。
 - 新增 SQLite 存储测试，覆盖相对路径、绝对路径、非法 URL、基础 SQL 执行和上下文提交。
 - 新增后端配置读取模块，支持从 TOML 文件读取应用、策略和交易成本配置。

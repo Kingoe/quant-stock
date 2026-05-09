@@ -209,6 +209,7 @@ quant-stock/
 第一版接口：
 
 ```text
+GET  /api/health
 GET  /api/overview
 GET  /api/rebalance/latest
 GET  /api/factors/scores

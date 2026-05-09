@@ -14,6 +14,21 @@
 
 ## 2. 成功响应
 
+健康检查响应：
+
+```json
+{
+  "data": {
+    "status": "ok",
+    "service": "quant-stock-backend"
+  },
+  "meta": {
+    "request_id": "local-dev",
+    "generated_at": "2026-05-09T10:30:00+08:00"
+  }
+}
+```
+
 普通成功响应：
 
 ```json
