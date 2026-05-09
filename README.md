@@ -22,6 +22,7 @@
 - [任务规划](docs/TASK_PLAN.md)
 - [测试用例](docs/TEST_CASES.md)
 - [项目约束](docs/PROJECT_CONSTRAINTS.md)
+- [迭代流程](docs/ITERATION_WORKFLOW.md)
 - [更新日志](docs/CHANGELOG.md)
 
 ## 第一版范围
@@ -45,6 +46,7 @@
 - 架构有变化：更新 [技术架构](docs/TECHNICAL_ARCHITECTURE.md)
 - 行为或测试范围变化：更新 [测试用例](docs/TEST_CASES.md)
 - 项目边界或风格变化：更新 [项目约束](docs/PROJECT_CONSTRAINTS.md)
+- 迭代流程变化：更新 [迭代流程](docs/ITERATION_WORKFLOW.md)
 - 完成了可见变更：更新 [更新日志](docs/CHANGELOG.md)
 
 文档是项目方向和进度的准绳，后续迭代不能脱离这些约束随意扩散。

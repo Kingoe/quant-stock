@@ -25,6 +25,7 @@
 | M0-6 | 创建更新日志 | Done | 见 `docs/CHANGELOG.md` |
 | M0-7 | 初始化 Git 仓库 | Done | 已在项目根目录初始化 |
 | M0-8 | 将文档调整为中文优先 | Done | 保留必要英文技术术语 |
+| M0-9 | 创建迭代流程文档 | Done | 见 `docs/ITERATION_WORKFLOW.md` |
 
 ## 里程碑 1：后端基础
 
@@ -145,7 +146,9 @@
 
 ## 迭代更新规则
 
-每次迭代结束时：
+每次迭代必须遵守 `docs/ITERATION_WORKFLOW.md`。
+
+迭代结束时：
 
 1. 将完成的任务标记为 Done。
 2. 将当前任务标记为 In Progress 或 Blocked。

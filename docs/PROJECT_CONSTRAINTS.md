@@ -115,6 +115,7 @@
 - `docs/TASK_PLAN.md`
 - `docs/TEST_CASES.md`
 - `docs/PROJECT_CONSTRAINTS.md`
+- `docs/ITERATION_WORKFLOW.md`
 - `docs/CHANGELOG.md`
 
 更新规则：
@@ -123,7 +124,10 @@
 - 任务进展：更新 `TASK_PLAN.md`
 - 行为或测试范围变化：更新 `TEST_CASES.md`
 - 项目边界或风格变化：更新 `PROJECT_CONSTRAINTS.md`
+- 迭代方式变化：更新 `ITERATION_WORKFLOW.md`
 - 完成用户可见或架构级变化：更新 `CHANGELOG.md`
+
+每轮开发必须遵守 `docs/ITERATION_WORKFLOW.md`。没有完成验证的功能不能标记为完成。
 
 ## 8. 文档语言风格
 
