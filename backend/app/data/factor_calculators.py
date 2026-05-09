@@ -1,13 +1,56 @@
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Mapping
 from datetime import date, timedelta
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from collections.abc import Mapping
 
 from app.data.factors import get_aligned_financial
+
+DEFAULT_TOTAL_FACTOR_WEIGHTS: dict[str, float] = {
+    "valuation": 0.25,
+    "quality": 0.25,
+    "growth": 0.20,
+    "momentum": 0.20,
+    "risk": 0.05,
+    "liquidity": 0.05,
+}
+
+
+def calculate_total_factor_scores(
+    connection: sqlite3.Connection,
+    stock_codes: list[str],
+    score_date: str,
+    weights: Mapping[str, float] | None = None,
+) -> dict[str, float]:
+    """计算多因子加权总分。"""
+    factor_scores = {
+        "valuation": calculate_valuation_factor(connection, stock_codes, score_date),
+        "quality": calculate_quality_factor(connection, stock_codes, score_date),
+        "growth": calculate_growth_factor(connection, stock_codes, score_date),
+        "momentum": calculate_momentum_factor(connection, stock_codes, score_date),
+        "risk": calculate_risk_factor(connection, stock_codes, score_date),
+        "liquidity": calculate_liquidity_factor(connection, stock_codes, score_date),
+    }
+    return calculate_weighted_total_scores(stock_codes, factor_scores, weights=weights)
+
+
+def calculate_weighted_total_scores(
+    stock_codes: list[str],
+    factor_scores: Mapping[str, Mapping[str, float]],
+    weights: Mapping[str, float] | None = None,
+) -> dict[str, float]:
+    """根据分组因子得分计算加权总分。"""
+    active_weights = dict(DEFAULT_TOTAL_FACTOR_WEIGHTS if weights is None else weights)
+    _validate_total_factor_weights(active_weights)
+
+    scores: dict[str, float] = {}
+    for stock_code in stock_codes:
+        scores[stock_code] = sum(
+            factor_scores.get(factor_name, {}).get(stock_code, 0.5) * weight
+            for factor_name, weight in active_weights.items()
+        )
+
+    return scores
 
 
 def calculate_liquidity_factor(
@@ -442,6 +485,16 @@ def _rank_values(values: Mapping[str, float | None], reverse: bool) -> dict[str,
         allow_zero=False,
         winsorize=False,
     )
+
+
+def _validate_total_factor_weights(weights: Mapping[str, float]) -> None:
+    for factor_name, weight in weights.items():
+        if weight < 0:
+            raise ValueError(f"{factor_name} factor weight must be non-negative")
+
+    total = sum(weights.values())
+    if abs(total - 1.0) > 0.000001:
+        raise ValueError("factor weights must sum to 1")
 
 
 def _rank_non_negative_values(

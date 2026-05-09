@@ -12,7 +12,9 @@ from app.data import (
     calculate_momentum_factor,
     calculate_quality_factor,
     calculate_risk_factor,
+    calculate_total_factor_scores,
     calculate_valuation_factor,
+    calculate_weighted_total_scores,
     load_daily_prices,
     load_financial_metrics,
     load_stock_basics,
@@ -1042,6 +1044,111 @@ def test_rank_factor_values_can_treat_zero_as_valid() -> None:
     )
 
     assert scores["600000"] > scores["000001"] > scores["600519"]
+
+
+def test_weighted_total_scores_use_default_factor_weights() -> None:
+    scores = calculate_weighted_total_scores(
+        ["600000", "000001"],
+        {
+            "valuation": {"600000": 1.0, "000001": 0.0},
+            "quality": {"600000": 0.0, "000001": 1.0},
+            "growth": {"600000": 1.0, "000001": 0.0},
+            "momentum": {"600000": 1.0, "000001": 0.0},
+            "risk": {"600000": 0.0, "000001": 1.0},
+            "liquidity": {"600000": 1.0, "000001": 0.0},
+        },
+    )
+
+    assert scores["600000"] == pytest.approx(0.70)
+    assert scores["000001"] == pytest.approx(0.30)
+
+
+def test_weighted_total_scores_use_neutral_score_for_missing_factor() -> None:
+    scores = calculate_weighted_total_scores(
+        ["600000", "000001"],
+        {
+            "valuation": {"600000": 1.0},
+            "quality": {},
+        },
+        weights={
+            "valuation": 0.5,
+            "quality": 0.5,
+        },
+    )
+
+    assert scores["600000"] == pytest.approx(0.75)
+    assert scores["000001"] == pytest.approx(0.5)
+
+
+def test_weighted_total_scores_reject_invalid_weights() -> None:
+    with pytest.raises(ValueError, match="factor weights must sum to 1"):
+        calculate_weighted_total_scores(
+            ["600000"],
+            {"valuation": {"600000": 1.0}},
+            weights={"valuation": 0.8},
+        )
+
+    with pytest.raises(ValueError, match="must be non-negative"):
+        calculate_weighted_total_scores(
+            ["600000"],
+            {"valuation": {"600000": 1.0}, "quality": {"600000": 0.0}},
+            weights={"valuation": 1.1, "quality": -0.1},
+        )
+
+
+def test_total_factor_scores_calculates_weighted_scores_from_data(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_stock_basics(
+            connection,
+            [
+                StockBasicRecord("600000", "浦发银行", "SH", "2000-01-01", "银行", False, "active"),
+                StockBasicRecord("000001", "平安银行", "SZ", "2000-01-01", "银行", False, "active"),
+            ],
+        )
+        load_valuations(
+            connection,
+            [
+                ValuationRecord("600000", "2026-05-20", 5.0, 0.8, None, 0.05),
+                ValuationRecord("000001", "2026-05-20", 20.0, 2.0, None, 0.01),
+            ],
+        )
+        load_financial_metrics(
+            connection,
+            [
+                FinancialRecord(
+                    "600000", "2026-03-31", "2026-04-25", 20.0, 40.0, 20.0, 20.0, 2000.0, 1000.0
+                ),
+                FinancialRecord(
+                    "000001", "2026-03-31", "2026-04-25", 5.0, 20.0, 5.0, 5.0, 300.0, 300.0
+                ),
+            ],
+        )
+        load_daily_prices(
+            connection,
+            _build_amount_records(
+                {"600000": 30_000_000.0, "000001": 10_000_000.0},
+                "2026-05-01",
+            )
+            + [
+                DailyPriceRecord("600000", "2026-03-21", 0, 0, 0, 10.0, 100, 1000, 10.0),
+                DailyPriceRecord("000001", "2026-03-21", 0, 0, 0, 10.0, 100, 1000, 10.0),
+                DailyPriceRecord("600000", "2026-01-20", 0, 0, 0, 9.0, 100, 900, 9.0),
+                DailyPriceRecord("000001", "2026-01-20", 0, 0, 0, 11.0, 100, 1100, 11.0),
+            ],
+        )
+
+        scores = calculate_total_factor_scores(
+            connection,
+            ["600000", "000001"],
+            "2026-05-20",
+        )
+
+    assert scores["600000"] > scores["000001"]
+    assert 0 <= scores["600000"] <= 1
+    assert 0 <= scores["000001"] <= 1
 
 
 def _build_amount_records(
