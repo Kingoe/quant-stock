@@ -1,9 +1,12 @@
+from datetime import date, timedelta
+
 from app.data import (
     DailyPriceRecord,
     FinancialRecord,
     StockBasicRecord,
     ValuationRecord,
     calculate_growth_factor,
+    calculate_liquidity_factor,
     calculate_momentum_factor,
     calculate_quality_factor,
     calculate_risk_factor,
@@ -858,3 +861,123 @@ def test_risk_factor_handles_missing_price_history(tmp_path) -> None:
 
     assert scores["000001"] > scores["600000"] > scores["600519"]
     assert scores["600000"] == 0.5
+
+
+def test_liquidity_factor_scores_higher_average_amount_higher(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_daily_prices(
+            connection,
+            _build_amount_records(
+                {
+                    "600000": 30_000_000.0,
+                    "000001": 20_000_000.0,
+                    "600519": 10_000_000.0,
+                },
+                "2026-05-01",
+            ),
+        )
+
+        scores = calculate_liquidity_factor(
+            connection, ["600000", "000001", "600519"], "2026-05-20"
+        )
+
+    assert scores["600000"] > scores["000001"] > scores["600519"]
+
+
+def test_liquidity_factor_uses_recent_20_day_average_amount(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_daily_prices(
+            connection,
+            _build_amount_records(
+                {"600000": 10_000_000.0, "000001": 20_000_000.0},
+                "2026-05-01",
+            )
+            + [
+                DailyPriceRecord("600000", "2026-04-20", 0, 0, 0, 10.0, 100, 100_000_000.0, 10.0),
+                DailyPriceRecord("000001", "2026-04-20", 0, 0, 0, 10.0, 100, 1_000_000.0, 10.0),
+            ],
+        )
+
+        scores = calculate_liquidity_factor(
+            connection,
+            ["600000", "000001"],
+            "2026-05-20",
+        )
+
+    assert scores["000001"] > scores["600000"]
+
+
+def test_liquidity_factor_supports_weight_configuration(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_daily_prices(
+            connection,
+            _build_amount_records({"600000": 30_000_000.0, "000001": 10_000_000.0}, "2026-05-01"),
+        )
+
+        scores = calculate_liquidity_factor(
+            connection,
+            ["600000", "000001"],
+            "2026-05-20",
+            average_amount_weight=0.5,
+        )
+
+    assert scores["600000"] == 0.5
+    assert scores["000001"] == 0.0
+
+
+def test_liquidity_factor_handles_insufficient_amount_history(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_daily_prices(
+            connection,
+            _build_amount_records({"000001": 30_000_000.0, "600519": 10_000_000.0}, "2026-05-01")
+            + [
+                DailyPriceRecord("600000", "2026-05-20", 0, 0, 0, 10.0, 100, 20_000_000.0, 10.0),
+            ],
+        )
+
+        scores = calculate_liquidity_factor(
+            connection,
+            ["600000", "000001", "600519"],
+            "2026-05-20",
+        )
+
+    assert scores["000001"] > scores["600000"] > scores["600519"]
+    assert scores["600000"] == 0.5
+
+
+def _build_amount_records(
+    amounts_by_stock: dict[str, float],
+    start_date: str,
+    days: int = 20,
+) -> list[DailyPriceRecord]:
+    first_day = date.fromisoformat(start_date)
+    records: list[DailyPriceRecord] = []
+    for day_index in range(days):
+        trade_date = (first_day + timedelta(days=day_index)).isoformat()
+        for stock_code, amount in amounts_by_stock.items():
+            records.append(
+                DailyPriceRecord(
+                    stock_code=stock_code,
+                    trade_date=trade_date,
+                    open_price=10.0,
+                    high_price=10.0,
+                    low_price=10.0,
+                    close_price=10.0,
+                    volume=amount // 10 if amount > 0 else 0,
+                    amount=amount,
+                    adjusted_close=10.0,
+                )
+            )
+    return records

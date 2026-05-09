@@ -6,6 +6,7 @@ from app.data.daily_prices import (
 )
 from app.data.factor_calculators import (
     calculate_growth_factor,
+    calculate_liquidity_factor,
     calculate_momentum_factor,
     calculate_quality_factor,
     calculate_risk_factor,
@@ -66,6 +67,7 @@ __all__ = [
     "TradingCalendarRecord",
     "ValuationRecord",
     "calculate_growth_factor",
+    "calculate_liquidity_factor",
     "calculate_momentum_factor",
     "calculate_quality_factor",
     "calculate_risk_factor",

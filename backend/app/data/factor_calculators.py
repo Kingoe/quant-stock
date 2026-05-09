@@ -10,6 +10,39 @@ if TYPE_CHECKING:
 from app.data.factors import get_aligned_financial
 
 
+def calculate_liquidity_factor(
+    connection: sqlite3.Connection,
+    stock_codes: list[str],
+    score_date: str,
+    average_amount_weight: float = 1.0,
+    lookback_days: int = 20,
+) -> dict[str, float]:
+    """计算流动性因子得分
+
+    流动性因子包含：
+    - 近 20 日平均成交额: 平均成交额越高越好
+
+    历史成交额不足窗口期时，对应股票得到中性得分。
+    """
+    start_date = _subtract_days(score_date, lookback_days)
+    average_amounts: dict[str, float | None] = {}
+    for stock_code in stock_codes:
+        amounts = _get_amounts_between(connection, stock_code, start_date, score_date)
+        if len(amounts) < lookback_days:
+            average_amounts[stock_code] = None
+        else:
+            average_amounts[stock_code] = sum(amounts[-lookback_days:]) / lookback_days
+
+    if not average_amounts:
+        return {}
+
+    average_amount_scores = _rank_values(average_amounts, reverse=False)
+    return {
+        stock_code: average_amount_scores.get(stock_code, 0.5) * average_amount_weight
+        for stock_code in average_amounts
+    }
+
+
 def calculate_risk_factor(
     connection: sqlite3.Connection,
     stock_codes: list[str],
@@ -273,6 +306,26 @@ def _get_prices_between(
         else:
             prices.append(row["close_price"])
     return prices
+
+
+def _get_amounts_between(
+    connection: sqlite3.Connection,
+    stock_code: str,
+    start_date: str,
+    end_date: str,
+) -> list[float]:
+    rows = connection.execute(
+        """
+        select amount
+        from daily_prices
+        where stock_code = ?
+          and trade_date >= ?
+          and trade_date <= ?
+        order by trade_date
+        """,
+        (stock_code, start_date, end_date),
+    ).fetchall()
+    return [row["amount"] for row in rows]
 
 
 def _calculate_return(current_price: float, previous_price: float | None) -> float | None:
