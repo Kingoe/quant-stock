@@ -4,6 +4,7 @@ from app.data.daily_prices import (
     get_prices_by_trade_date,
     load_daily_prices,
 )
+from app.data.factor_calculators import calculate_valuation_factor
 from app.data.factors import (
     get_aligned_daily_price,
     get_aligned_financial,
@@ -58,6 +59,7 @@ __all__ = [
     "StockBasicRecord",
     "TradingCalendarRecord",
     "ValuationRecord",
+    "calculate_valuation_factor",
     "filter_stocks",
     "filter_stocks_by_abnormal_valuation",
     "filter_stocks_by_listing_date",
