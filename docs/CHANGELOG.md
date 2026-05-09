@@ -1,11 +1,12 @@
-# Changelog
+# 更新日志
 
 ## 2026-05-09
 
-- Created initial project documentation.
-- Defined project positioning as an A-share multi-factor stock selection assistant.
-- Defined MVP scope: CSI 800, weekly rebalance, balanced factor model, backtest, dashboard, no automatic trading.
-- Added technical architecture document.
-- Added task plan and milestone tracker.
-- Added test case document.
-- Added project constraints and style rules.
+- 创建项目初始文档。
+- 明确项目定位：A 股多因子选股辅助系统。
+- 明确第一版范围：中证 800、周频调仓、均衡型多因子、回测、前端工作台、不自动下单。
+- 新增技术架构文档。
+- 新增任务规划和里程碑跟踪。
+- 新增测试用例文档。
+- 新增项目约束和界面风格规则。
+- 将文档风格调整为中文优先，保留必要英文技术术语，提升非英文使用者体验。

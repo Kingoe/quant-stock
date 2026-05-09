@@ -1,158 +1,157 @@
-# Test Cases
+# 测试用例
 
-This document defines the expected test coverage. Update it whenever functionality changes.
+本文档定义项目需要覆盖的测试范围。后续功能变化时，必须同步更新。
 
-## 1. Testing Principles
+## 1. 测试原则
 
-- Prefer deterministic tests with fixed fixture data.
-- Do not depend on live market data in unit tests.
-- Mock external data providers.
-- Test A-share trading rules explicitly.
-- Test data effective dates to prevent lookahead bias.
-- Keep strategy tests explainable; avoid opaque expected values.
+- 优先使用固定测试数据，保证测试结果可重复。
+- 单元测试不能依赖实时行情。
+- 外部数据源需要 mock，也就是用模拟数据替代真实网络请求。
+- A 股交易规则必须单独测试。
+- 财务数据的有效日期必须测试，避免未来函数。
+- 策略测试要可解释，不使用看不懂的期望值。
 
-## 2. Backend Unit Tests
+## 2. 后端单元测试
 
-### Configuration
+### 配置模块
 
-- Loads default strategy configuration.
-- Rejects invalid holding count.
-- Rejects factor weights that do not sum to 1.
-- Rejects negative transaction cost values.
+- 能读取默认策略配置。
+- 持仓数量非法时应报错。
+- 因子权重总和不等于 1 时应报错。
+- 交易成本为负数时应报错。
 
-### Storage
+### 存储模块
 
-- Creates required SQLite tables.
-- Inserts and updates stock basic info.
-- Inserts daily price rows without duplicates.
-- Queries prices by stock and date range.
-- Queries latest available data date.
+- 能创建必要的 SQLite 表。
+- 能插入和更新股票基础信息。
+- 能插入日行情，并避免重复数据。
+- 能按股票和日期区间查询行情。
+- 能查询最新可用数据日期。
 
-### Data Provider
+### 数据源模块
 
-- Converts raw provider fields into internal schema.
-- Handles missing optional fields.
-- Fails clearly when required fields are missing.
-- Does not write partial data when a batch fails validation.
+- 能把外部数据源字段转换成内部字段。
+- 可选字段缺失时不应崩溃。
+- 必填字段缺失时应给出清晰错误。
+- 一批数据校验失败时，不能写入部分脏数据。
 
-## 3. Universe Tests
+## 3. 股票池测试
 
-- Excludes ST and *ST stocks.
-- Excludes stocks listed for less than one year as of scoring date.
-- Excludes suspended stocks on the rebalance date.
-- Excludes stocks below the liquidity threshold.
-- Excludes invalid PE or PB values.
-- Keeps valid CSI 800 members that pass all filters.
-- Produces a reason list for excluded stocks when debug mode is enabled.
+- 能剔除 ST 和 *ST 股票。
+- 能按评分日期剔除上市不足一年的股票。
+- 能剔除调仓日停牌股票。
+- 能剔除低于成交额阈值的股票。
+- 能剔除无效 PE 或 PB 的股票。
+- 能保留满足条件的中证 800 成分股。
+- 调试模式下能输出股票被剔除的原因。
 
-## 4. Factor Tests
+## 4. 因子测试
 
-### Valuation
+### 估值因子
 
-- Lower PE receives a better valuation rank when PE is positive and valid.
-- Lower PB receives a better valuation rank when PB is positive and valid.
-- Higher dividend yield receives a better valuation rank.
-- Invalid or negative PE values are excluded or marked unusable according to configuration.
+- 在 PE 为正且有效时，PE 越低估值得分越好。
+- 在 PB 为正且有效时，PB 越低估值得分越好。
+- 股息率越高估值得分越好。
+- 无效或负 PE 应按配置剔除或标记不可用。
 
-### Quality
+### 质量因子
 
-- Higher ROE receives a better quality score.
-- Higher gross margin receives a better quality score.
-- Higher operating cash flow to net profit receives a better quality score.
+- ROE 越高质量得分越好。
+- 毛利率越高质量得分越好。
+- 经营现金流 / 净利润越高质量得分越好。
 
-### Growth
+### 成长因子
 
-- Higher revenue growth receives a better growth score.
-- Higher net profit growth receives a better growth score.
-- Missing growth data reduces usability without crashing scoring.
+- 营收增速越高成长得分越好。
+- 净利润增速越高成长得分越好。
+- 成长数据缺失时不应导致整个评分流程崩溃。
 
-### Momentum
+### 动量因子
 
-- 60-day and 120-day returns are calculated from adjusted prices.
-- Stocks without enough price history do not receive misleading momentum scores.
+- 60 日和 120 日涨跌幅应基于复权价格计算。
+- 价格历史不足的股票不能得到误导性的动量得分。
 
-### Risk and Liquidity
+### 风险和流动性因子
 
-- Lower volatility receives a better risk score.
-- Lower max drawdown receives a better risk score.
-- Higher 20-day average trading amount passes liquidity scoring.
+- 波动率越低风险得分越好。
+- 最大回撤越低风险得分越好。
+- 近 20 日平均成交额越高，流动性得分越好。
 
-### Scoring Pipeline
+### 打分流程
 
-- Winsorization caps extreme values.
-- Percentile ranking returns scores in a stable range.
-- Reverse-scored factors are handled correctly.
-- Weighted total score matches the configured weights.
+- 去极值能限制极端值影响。
+- 分位数排名输出稳定范围内的分数。
+- “越低越好”的因子能正确反向。
+- 加权总分应符合配置权重。
 
-## 5. Portfolio Tests
+## 5. 组合测试
 
-- Selects the top N stocks after filters.
-- Applies single-stock maximum weight.
-- Applies industry maximum weight.
-- Generates buy list for new target holdings.
-- Generates sell list for current holdings missing from target holdings.
-- Generates hold list for overlapping current and target holdings.
-- Generates watch list for high-scoring stocks outside the final portfolio.
-- Skips buy orders for limit-up or suspended stocks.
-- Flags sell orders blocked by limit-down or suspension.
+- 能选择排名前 N 的股票。
+- 能应用单票最大仓位限制。
+- 能应用行业最大仓位限制。
+- 新进入目标组合的股票进入买入列表。
+- 当前持仓但不在目标组合的股票进入卖出列表。
+- 当前持仓且仍在目标组合的股票进入持有列表。
+- 高分但未入选最终组合的股票进入观察列表。
+- 涨停或停牌股票不能生成买入订单。
+- 跌停或停牌导致无法卖出时，需要标记风险。
 
-## 6. Backtest Tests
+## 6. 回测测试
 
-- Generates weekly rebalance dates from the trading calendar.
-- Uses next trading day open price for execution in MVP.
-- Applies commission on buy and sell.
-- Applies stamp duty only on sells.
-- Applies slippage to execution prices.
-- Rounds orders to 100-share board lots.
-- Prevents same-day buy then sell behavior that violates T+1.
-- Blocks buys on limit-up days.
-- Blocks sells on limit-down days.
-- Keeps suspended holdings unchanged.
-- Updates cash and positions after each transaction.
-- Calculates net asset value correctly.
-- Calculates total return, annualized return, max drawdown, Sharpe ratio, win rate, and turnover.
-- Compares performance against CSI 300 and CSI 500 benchmark series.
+- 能根据交易日历生成周频调仓日。
+- 第一版能使用下一个交易日开盘价作为成交价。
+- 买入和卖出都应计入佣金。
+- 只有卖出计入印花税。
+- 成交价应计入滑点。
+- 买卖数量应按 100 股整数手处理。
+- 不能出现违反 T+1 的当天买入当天卖出。
+- 涨停日不能买入。
+- 跌停日不能卖出。
+- 停牌持仓保持不变。
+- 每笔交易后现金和持仓应正确变化。
+- 组合净值计算正确。
+- 能计算总收益、年化收益、最大回撤、夏普比率、胜率、换手率。
+- 能与沪深 300、中证 500 基准序列对比。
 
-## 7. API Tests
+## 7. API 测试
 
-- `GET /api/overview` returns overview metrics.
-- `GET /api/rebalance/latest` returns buy, sell, hold, and watch lists.
-- `GET /api/factors/scores` supports pagination and sorting.
-- `GET /api/factors/scores/{stock_code}` returns stock details or 404.
-- `GET /api/backtest/summary` returns core metrics.
-- `GET /api/backtest/equity-curve` returns ordered time series.
-- `GET /api/backtest/drawdown` returns ordered drawdown series.
-- `GET /api/config/strategy` returns current strategy configuration.
-- `GET /api/data/status` returns latest data dates and task status.
+- `GET /api/overview` 返回总览指标。
+- `GET /api/rebalance/latest` 返回买入、卖出、持有、观察列表。
+- `GET /api/factors/scores` 支持分页和排序。
+- `GET /api/factors/scores/{stock_code}` 返回股票详情；不存在时返回 404。
+- `GET /api/backtest/summary` 返回核心回测指标。
+- `GET /api/backtest/equity-curve` 返回按时间排序的净值曲线。
+- `GET /api/backtest/drawdown` 返回按时间排序的回撤曲线。
+- `GET /api/config/strategy` 返回当前策略配置。
+- `GET /api/data/status` 返回最新数据日期和任务状态。
 
-## 8. Frontend Tests
+## 8. 前端测试
 
-- App shell renders navigation.
-- Dashboard shows overview metrics and chart placeholders.
-- Weekly Rebalance page renders buy, sell, hold, and watch lists.
-- Factor Scores page supports search, sorting, and empty state.
-- Backtest Analysis page renders metric cards and charts.
-- Strategy Config page renders current configuration.
-- Data Status page highlights stale or incomplete data.
-- API loading, empty, and error states are visible and clear.
+- 应能渲染整体导航。
+- 总览页能展示核心指标和图表区域。
+- 本周调仓页能展示买入、卖出、持有、观察列表。
+- 因子评分页支持搜索、排序和空状态。
+- 回测分析页能展示指标卡和图表。
+- 策略配置页能展示当前配置。
+- 数据状态页能突出过期或缺失数据。
+- 接口加载中、空数据、错误状态都要有清晰提示。
 
-## 9. Integration Tests
+## 9. 集成测试
 
-- Runs a full fixture-based weekly strategy pipeline.
-- Produces deterministic factor scores.
-- Produces deterministic rebalance suggestions.
-- Produces deterministic backtest metrics.
-- Frontend can load mock API data for all pages.
+- 能使用固定测试数据跑完整周频策略流程。
+- 生成确定性的因子评分。
+- 生成确定性的调仓建议。
+- 生成确定性的回测指标。
+- 前端能通过模拟 API 数据加载所有页面。
 
-## 10. Manual Verification
+## 10. 人工验收
 
-Before calling a milestone complete:
+每个里程碑完成前，需要检查：
 
-1. Run backend unit tests.
-2. Run frontend tests.
-3. Start backend locally.
-4. Start frontend locally.
-5. Open the dashboard.
-6. Verify every page has data or a clear empty state.
-7. Export the latest rebalance report.
-8. Confirm task plan and changelog are updated.
+1. 后端单元测试通过。
+2. 前端测试通过。
+3. 后端能本地启动。
+4. 前端能本地启动。
+5. 打开页面后每个页面都有数据或清晰空状态。
+6. 能导出最新调仓报告。
+7. 任务规划和更新日志已经同步更新。

@@ -1,49 +1,47 @@
-# Technical Architecture
+# 技术架构
 
-## 1. Product Positioning
+## 1. 项目定位
 
-Quant Stock is a personal A-share multi-factor stock selection assistant.
+Quant Stock 是一个个人 A 股多因子选股辅助系统。
 
-The system should support a disciplined workflow:
+第一阶段目标不是自动交易，而是形成一个可解释、可回测、可复盘的辅助决策流程：
 
-1. Update market, valuation, financial, and index constituent data.
-2. Build a tradable stock universe.
-3. Calculate factor scores.
-4. Construct a weekly portfolio.
-5. Run historical backtests.
-6. Generate weekly rebalance suggestions.
-7. Display results in a local web dashboard.
-8. Let the user manually confirm real trades.
+1. 更新行情、估值、财务、指数成分等数据。
+2. 构建可交易股票池。
+3. 计算多因子评分。
+4. 生成周频目标组合。
+5. 运行历史回测。
+6. 输出每周调仓建议。
+7. 通过本地 Web 页面展示结果。
+8. 由用户人工确认真实交易。
 
-The first stage deliberately avoids automatic broker order placement.
+## 2. 技术栈
 
-## 2. Recommended Tech Stack
+### 后端
 
-### Backend
+- 语言：Python
+- API 框架：FastAPI
+- 数据处理：pandas、numpy
+- 数据库：SQLite
+- 定时任务：APScheduler 或系统定时任务
+- 导出：CSV、Excel
+- 测试：pytest
 
-- Language: Python
-- API framework: FastAPI
-- Data processing: pandas, numpy
-- Database: SQLite for MVP
-- Scheduling: APScheduler or system scheduler
-- Export: CSV and Excel
-- Testing: pytest
+### 前端
 
-### Frontend
+- 框架：React
+- 语言：TypeScript
+- 构建工具：Vite
+- 图表：ECharts
+- 表格：TanStack Table 或轻量自定义表格
+- 样式：Tailwind CSS 或 CSS modules
 
-- Framework: React
-- Language: TypeScript
-- Build tool: Vite
-- Charts: ECharts
-- Tables: TanStack Table or a lightweight custom table
-- Styling: Tailwind CSS or focused CSS modules
+### 数据源
 
-### Data Source
+- 第一版：akshare
+- 后续可选：tushare、聚宽、米筐、付费数据源、券商数据
 
-- MVP: akshare
-- Future options: tushare, JoinQuant, RiceQuant, paid vendor data, broker data
-
-## 3. Target Directory Structure
+## 3. 目录结构
 
 ```text
 quant-stock/
@@ -59,18 +57,18 @@ quant-stock/
     pyproject.toml
     app/
       main.py
-      api/
-      config/
-      data/
-      storage/
-      universe/
-      factors/
-      scoring/
-      portfolio/
-      backtest/
-      reports/
-      risk/
-      scheduler/
+      api/          # API 接口
+      config/       # 配置读取
+      data/         # 数据源接入
+      storage/      # SQLite 读写
+      universe/     # 股票池过滤
+      factors/      # 因子计算
+      scoring/      # 因子打分
+      portfolio/    # 组合构建
+      backtest/     # 回测引擎
+      reports/      # 报告导出
+      risk/         # 风控规则
+      scheduler/    # 定时任务
     tests/
 
   frontend/
@@ -90,122 +88,123 @@ quant-stock/
   scripts/
 ```
 
-## 4. System Flow
+## 4. 系统流程
 
 ```text
-Data Provider
-  -> SQLite Storage
-  -> Universe Filter
-  -> Factor Calculation
-  -> Factor Scoring
-  -> Portfolio Construction
-  -> Backtest Engine
-  -> Reports and API
-  -> Frontend Dashboard
+数据源
+  -> SQLite 本地存储
+  -> 股票池过滤
+  -> 因子计算
+  -> 因子打分
+  -> 组合构建
+  -> 回测引擎
+  -> 报告和 API
+  -> 前端工作台
 ```
 
-## 5. Core Data
+## 5. 核心数据
 
-The MVP should store or derive:
+第一版需要存储或计算：
 
-- Stock basic info: code, name, exchange, listing date, industry, status
-- Index constituents: CSI 300, CSI 500, CSI 800
-- Daily price data: open, high, low, close, volume, amount, adjusted close
-- Valuation data: PE, PB, PS, dividend yield
-- Financial data: ROE, gross margin, revenue growth, net profit growth, operating cash flow
-- Trading status: suspension, limit up, limit down, ST status
-- Trading calendar
-- Strategy runs and generated rebalance suggestions
-- Backtest positions, transactions, and performance metrics
+- 股票基础信息：代码、名称、交易所、上市日期、行业、状态
+- 指数成分：沪深 300、中证 500、中证 800
+- 日行情：开盘价、最高价、最低价、收盘价、成交量、成交额、复权价
+- 估值数据：PE、PB、PS、股息率
+- 财务数据：ROE、毛利率、营收增速、净利润增速、经营现金流
+- 交易状态：停牌、涨停、跌停、ST 状态
+- 交易日历
+- 策略运行记录
+- 调仓建议
+- 回测持仓、交易流水、绩效指标
 
-## 6. Stock Universe Rules
+## 6. 股票池规则
 
-MVP base universe: CSI 800.
+第一版基础股票池：中证 800。
 
-Filters:
+过滤规则：
 
-- Exclude ST and *ST stocks.
-- Exclude stocks listed for less than one year.
-- Exclude suspended stocks.
-- Exclude low-liquidity stocks based on average trading amount.
-- Exclude abnormal PE and PB values.
-- Exclude companies with obvious financial distress when reliable data exists.
-- Exclude stocks that cannot be traded on the rebalance execution day.
+- 剔除 ST 和 *ST 股票。
+- 剔除上市不足一年的股票。
+- 剔除停牌股票。
+- 剔除成交额过低的股票。
+- 剔除 PE、PB 异常的股票。
+- 在可靠数据可用时，剔除财务明显异常的公司。
+- 剔除调仓执行日无法正常交易的股票。
 
-## 7. Factor Model
+## 7. 因子模型
 
-MVP model: balanced multi-factor scoring.
+第一版采用均衡型多因子模型。
 
-Factor groups:
+因子分组：
 
-- Valuation: PE, PB, dividend yield
-- Quality: ROE, gross margin, operating cash flow to net profit
-- Growth: revenue growth, net profit growth
-- Momentum: 60-day return, 120-day return
-- Risk: volatility, max drawdown
-- Liquidity: 20-day average trading amount
+- 估值：PE、PB、股息率
+- 质量：ROE、毛利率、经营现金流 / 净利润
+- 成长：营收增速、净利润增速
+- 动量：近 60 日涨跌幅、近 120 日涨跌幅
+- 风险：波动率、最大回撤
+- 流动性：近 20 日平均成交额
 
-Initial weights:
+初始权重：
 
-- Valuation: 25%
-- Quality: 25%
-- Growth: 20%
-- Momentum: 20%
-- Risk and liquidity: 10%
+- 估值：25%
+- 质量：25%
+- 成长：20%
+- 动量：20%
+- 风险和流动性：10%
 
-Scoring pipeline:
+打分流程：
 
-1. Align data by effective date.
-2. Remove unusable rows.
-3. Winsorize extreme values.
-4. Standardize or percentile-rank each factor.
-5. Reverse factors where lower is better.
-6. Calculate weighted total score.
-7. Apply risk and portfolio constraints.
+1. 按有效日期对齐数据。
+2. 删除不可用数据。
+3. 对极端值做 winsorize 去极值处理。
+4. 对每个因子做标准化或分位数排名。
+5. 对“越低越好”的因子做反向处理。
+6. 按权重计算总分。
+7. 应用风控和组合约束。
 
-## 8. Portfolio Rules
+## 8. 组合规则
 
-MVP portfolio:
+第一版组合规则：
 
-- Weekly rebalance.
-- Hold 10-20 stocks.
-- Single-stock maximum weight: 5%-10%.
-- Single-industry maximum weight: 25%-30%.
-- Keep a small cash buffer.
-- Skip stocks that cannot be bought.
-- Keep or defer stocks that cannot be sold because of suspension or limit down.
-- Generate buy, sell, hold, and watch lists.
+- 每周调仓一次。
+- 持仓 10-20 只股票。
+- 单只股票最高仓位 5%-10%。
+- 单个行业最高仓位 25%-30%。
+- 保留少量现金缓冲。
+- 无法买入的股票跳过。
+- 因停牌或跌停无法卖出的股票保留并标记风险。
+- 生成买入、卖出、持有、观察列表。
 
-## 9. Backtest Rules
+## 9. 回测规则
 
-The backtest must model A-share constraints:
+回测必须尽量贴近 A 股真实限制：
 
-- Weekly signal generation after market close.
-- Execute on the next trading day open price in MVP.
-- T+1 selling restriction.
-- Limit up cannot be bought.
-- Limit down cannot be sold.
-- Suspended stocks cannot be traded.
-- Commission.
-- Stamp duty on sells.
-- Slippage.
-- 100-share board lot.
-- Financial data must become usable only after disclosure date to avoid lookahead bias.
+- 每周收盘后生成信号。
+- 第一版假设下一个交易日开盘价成交。
+- 处理 T+1 限制。
+- 涨停无法买入。
+- 跌停无法卖出。
+- 停牌无法交易。
+- 计入佣金。
+- 卖出计入印花税。
+- 计入滑点。
+- 买卖数量按 100 股整数手处理。
+- 财务数据只能在披露日之后使用，避免未来函数。
 
-Metrics:
+绩效指标：
 
-- Total return
-- Annualized return
-- Maximum drawdown
-- Sharpe ratio
-- Win rate
-- Turnover
-- Monthly returns
-- Benchmark comparison with CSI 300 and CSI 500
+- 总收益
+- 年化收益
+- 最大回撤
+- 夏普比率
+- 胜率
+- 换手率
+- 月度收益
+- 与沪深 300、中证 500 对比
 
-## 10. API Design
+## 10. API 设计
 
-Initial endpoints:
+第一版接口：
 
 ```text
 GET  /api/overview
@@ -222,38 +221,38 @@ POST /api/jobs/run-weekly-strategy
 GET  /api/exports/latest
 ```
 
-## 11. Frontend Pages
+## 11. 前端页面
 
-### Dashboard
+### 总览页
 
-Shows portfolio net value, year-to-date return, maximum drawdown, current holdings, weekly buy and sell counts, equity curve, and drawdown curve.
+展示组合净值、今年收益、最大回撤、当前持仓、本周买入和卖出数量、收益曲线、回撤曲线。
 
-### Weekly Rebalance
+### 本周调仓页
 
-Shows buy, sell, hold, and watch lists, with recommended weights, factor score explanations, and trading availability warnings.
+展示买入、卖出、持有、观察列表，并显示建议仓位、因子解释、交易可用性提示。
 
-### Factor Scores
+### 因子评分页
 
-Shows stock-level total score, group scores, industry ranking, historical score trend, and searchable stock details.
+展示股票总分、分组得分、行业排名、历史得分变化，并支持搜索股票。
 
-### Backtest Analysis
+### 回测分析页
 
-Shows equity curve, drawdown, annualized return, Sharpe ratio, win rate, turnover, monthly return heatmap, and benchmark comparison.
+展示收益曲线、回撤曲线、年化收益、夏普比率、胜率、换手率、月度收益热力图、基准对比。
 
-### Strategy Config
+### 策略配置页
 
-Shows stock universe, rebalance frequency, holding count, factor weights, transaction costs, slippage, and risk limits.
+展示股票池、调仓频率、持仓数量、因子权重、交易成本、滑点、风控限制。第一版可以先只读。
 
-### Data Status
+### 数据状态页
 
-Shows latest market date, latest financial data date, last run time, data completeness, and recent task logs.
+展示最新行情日期、最新财务数据日期、最近运行时间、数据完整性和任务日志。
 
-## 12. Documentation Rule
+## 12. 文档同步规则
 
-Every meaningful iteration must update:
+每次有实质迭代时必须同步更新：
 
-- `docs/TASK_PLAN.md` for task status.
-- `docs/CHANGELOG.md` for completed changes.
-- `docs/TECHNICAL_ARCHITECTURE.md` when architecture changes.
-- `docs/TEST_CASES.md` when behavior or coverage changes.
-- `docs/PROJECT_CONSTRAINTS.md` when project boundaries or style rules change.
+- `docs/TASK_PLAN.md`：任务状态
+- `docs/CHANGELOG.md`：已完成变更
+- `docs/TECHNICAL_ARCHITECTURE.md`：架构变化
+- `docs/TEST_CASES.md`：行为或测试范围变化
+- `docs/PROJECT_CONSTRAINTS.md`：边界、风格或约束变化

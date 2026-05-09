@@ -1,153 +1,154 @@
-# Task Plan
+# 任务规划
 
-This document tracks project progress. Update it during every iteration.
+本文档用于跟踪项目进度。每次迭代都要更新。
 
-Status values:
+状态说明：
 
-- Not Started
-- In Progress
-- Blocked
-- Done
+- Not Started：未开始
+- In Progress：进行中
+- Blocked：阻塞
+- Done：已完成
 
-## Current Milestone
+## 当前里程碑
 
-Milestone 0: Project foundation and documentation.
+里程碑 0：项目基础与文档。
 
-## Milestone 0: Project Foundation
+## 里程碑 0：项目基础
 
-| ID | Task | Status | Notes |
+| ID | 任务 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| M0-1 | Create project directory | Done | Project root: `/Users/jinwu/work/hub/quant-stock` |
-| M0-2 | Create architecture document | Done | See `docs/TECHNICAL_ARCHITECTURE.md` |
-| M0-3 | Create task plan | Done | This document |
-| M0-4 | Create test case document | Done | See `docs/TEST_CASES.md` |
-| M0-5 | Create project constraints document | Done | See `docs/PROJECT_CONSTRAINTS.md` |
-| M0-6 | Create changelog | Done | See `docs/CHANGELOG.md` |
-| M0-7 | Initialize Git repository | Done | Initialized Git repository in project root |
+| M0-1 | 创建项目目录 | Done | 项目根目录：`/Users/jinwu/work/hub/quant-stock` |
+| M0-2 | 创建技术架构文档 | Done | 见 `docs/TECHNICAL_ARCHITECTURE.md` |
+| M0-3 | 创建任务规划文档 | Done | 本文档 |
+| M0-4 | 创建测试用例文档 | Done | 见 `docs/TEST_CASES.md` |
+| M0-5 | 创建项目约束文档 | Done | 见 `docs/PROJECT_CONSTRAINTS.md` |
+| M0-6 | 创建更新日志 | Done | 见 `docs/CHANGELOG.md` |
+| M0-7 | 初始化 Git 仓库 | Done | 已在项目根目录初始化 |
+| M0-8 | 将文档调整为中文优先 | Done | 保留必要英文技术术语 |
 
-## Milestone 1: Backend Foundation
+## 里程碑 1：后端基础
 
-| ID | Task | Status | Notes |
+| ID | 任务 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| M1-1 | Create Python project structure | Not Started | `backend/app`, `backend/tests` |
-| M1-2 | Add backend dependency configuration | Not Started | FastAPI, pandas, numpy, pytest |
-| M1-3 | Add app configuration loader | Not Started | Strategy config and runtime settings |
-| M1-4 | Add SQLite connection layer | Not Started | Simple repository pattern |
-| M1-5 | Add health check API | Not Started | Confirms backend runs |
+| M1-1 | 创建 Python 项目结构 | Not Started | `backend/app`、`backend/tests` |
+| M1-2 | 添加后端依赖配置 | Not Started | FastAPI、pandas、numpy、pytest |
+| M1-3 | 添加配置读取模块 | Not Started | 策略配置和运行配置 |
+| M1-4 | 添加 SQLite 连接层 | Not Started | 简单 repository 模式 |
+| M1-5 | 添加健康检查接口 | Not Started | 用于确认后端正常运行 |
 
-## Milestone 2: Data Foundation
+## 里程碑 2：数据底座
 
-| ID | Task | Status | Notes |
+| ID | 任务 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| M2-1 | Define database schema | Not Started | Stocks, prices, fundamentals, index constituents, strategy runs |
-| M2-2 | Implement trading calendar loader | Not Started | Required by weekly rebalance and backtest |
-| M2-3 | Implement stock basic info loader | Not Started | Include listing date, status, industry |
-| M2-4 | Implement CSI 800 constituent loader | Not Started | Base universe for MVP |
-| M2-5 | Implement daily price loader | Not Started | Open, high, low, close, volume, amount |
-| M2-6 | Implement valuation data loader | Not Started | PE, PB, PS, dividend yield |
-| M2-7 | Implement financial data loader | Not Started | ROE, margins, growth, cash flow |
-| M2-8 | Implement data status checks | Not Started | Latest dates and completeness |
+| M2-1 | 定义数据库表结构 | Not Started | 股票、行情、财务、指数成分、策略运行 |
+| M2-2 | 实现交易日历加载 | Not Started | 调仓和回测都依赖 |
+| M2-3 | 实现股票基础信息加载 | Not Started | 上市日期、状态、行业 |
+| M2-4 | 实现中证 800 成分股加载 | Not Started | 第一版基础股票池 |
+| M2-5 | 实现日行情加载 | Not Started | 开高低收、成交量、成交额 |
+| M2-6 | 实现估值数据加载 | Not Started | PE、PB、PS、股息率 |
+| M2-7 | 实现财务数据加载 | Not Started | ROE、毛利率、成长、现金流 |
+| M2-8 | 实现数据状态检查 | Not Started | 最新日期和完整性 |
 
-## Milestone 3: Stock Universe
+## 里程碑 3：股票池过滤
 
-| ID | Task | Status | Notes |
+| ID | 任务 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| M3-1 | Implement CSI 800 base universe query | Not Started | Rebalance date aware |
-| M3-2 | Implement ST filter | Not Started | Exclude ST and *ST |
-| M3-3 | Implement listing age filter | Not Started | Exclude listed less than one year |
-| M3-4 | Implement suspension filter | Not Started | Exclude unavailable stocks |
-| M3-5 | Implement liquidity filter | Not Started | Based on 20-day average amount |
-| M3-6 | Implement valuation abnormal filter | Not Started | Remove invalid PE/PB rows |
-| M3-7 | Add universe API and tests | Not Started | Debuggable filtered universe |
+| M3-1 | 实现中证 800 基础股票池查询 | Not Started | 需要按调仓日期判断 |
+| M3-2 | 实现 ST 过滤 | Not Started | 剔除 ST 和 *ST |
+| M3-3 | 实现上市时间过滤 | Not Started | 剔除上市不足一年 |
+| M3-4 | 实现停牌过滤 | Not Started | 剔除不可交易股票 |
+| M3-5 | 实现流动性过滤 | Not Started | 基于近 20 日平均成交额 |
+| M3-6 | 实现估值异常过滤 | Not Started | 剔除无效 PE/PB |
+| M3-7 | 添加股票池接口和测试 | Not Started | 方便页面和调试使用 |
 
-## Milestone 4: Factor Calculation
+## 里程碑 4：因子计算
 
-| ID | Task | Status | Notes |
+| ID | 任务 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| M4-1 | Implement factor input alignment | Not Started | Use only data effective on scoring date |
-| M4-2 | Implement valuation factors | Not Started | PE, PB, dividend yield |
-| M4-3 | Implement quality factors | Not Started | ROE, gross margin, cash flow quality |
-| M4-4 | Implement growth factors | Not Started | Revenue and profit growth |
-| M4-5 | Implement momentum factors | Not Started | 60-day and 120-day return |
-| M4-6 | Implement risk factors | Not Started | Volatility and max drawdown |
-| M4-7 | Implement liquidity factor | Not Started | 20-day average amount |
-| M4-8 | Implement winsorization and ranking | Not Started | Avoid extreme factor distortion |
-| M4-9 | Implement weighted total score | Not Started | Initial balanced weights |
+| M4-1 | 实现因子输入数据对齐 | Not Started | 只使用评分日已生效数据 |
+| M4-2 | 实现估值因子 | Not Started | PE、PB、股息率 |
+| M4-3 | 实现质量因子 | Not Started | ROE、毛利率、现金流质量 |
+| M4-4 | 实现成长因子 | Not Started | 营收和利润增长 |
+| M4-5 | 实现动量因子 | Not Started | 60 日和 120 日涨跌幅 |
+| M4-6 | 实现风险因子 | Not Started | 波动率和最大回撤 |
+| M4-7 | 实现流动性因子 | Not Started | 20 日平均成交额 |
+| M4-8 | 实现去极值和排名 | Not Started | 降低极端值影响 |
+| M4-9 | 实现加权总分 | Not Started | 使用初始均衡权重 |
 
-## Milestone 5: Portfolio Construction
+## 里程碑 5：组合构建
 
-| ID | Task | Status | Notes |
+| ID | 任务 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| M5-1 | Select top-ranked candidates | Not Started | Target 10-20 holdings |
-| M5-2 | Apply single-stock weight cap | Not Started | 5%-10% |
-| M5-3 | Apply industry weight cap | Not Started | 25%-30% |
-| M5-4 | Generate buy, sell, hold, watch lists | Not Started | Weekly rebalance output |
-| M5-5 | Add trading availability warnings | Not Started | Limit up, limit down, suspension |
-| M5-6 | Add rebalance API and tests | Not Started | Frontend data source |
+| M5-1 | 选择排名靠前候选股 | Not Started | 目标持仓 10-20 只 |
+| M5-2 | 应用单票仓位上限 | Not Started | 5%-10% |
+| M5-3 | 应用行业仓位上限 | Not Started | 25%-30% |
+| M5-4 | 生成买入、卖出、持有、观察列表 | Not Started | 每周调仓输出 |
+| M5-5 | 添加交易可用性提示 | Not Started | 涨停、跌停、停牌 |
+| M5-6 | 添加调仓接口和测试 | Not Started | 前端数据来源 |
 
-## Milestone 6: Backtest Engine
+## 里程碑 6：回测引擎
 
-| ID | Task | Status | Notes |
+| ID | 任务 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| M6-1 | Implement weekly rebalance scheduler | Not Started | Signal after close, execute next trading day |
-| M6-2 | Implement order generation | Not Started | Board lot and target weights |
-| M6-3 | Implement transaction costs | Not Started | Commission, stamp duty, slippage |
-| M6-4 | Implement A-share trade constraints | Not Started | T+1, limit up/down, suspension |
-| M6-5 | Implement position and cash accounting | Not Started | Portfolio ledger |
-| M6-6 | Implement performance metrics | Not Started | Return, drawdown, Sharpe, turnover |
-| M6-7 | Implement benchmark comparison | Not Started | CSI 300 and CSI 500 |
-| M6-8 | Add backtest API and tests | Not Started | Summary and chart data |
+| M6-1 | 实现周频调仓调度 | Not Started | 收盘后生成信号，下个交易日执行 |
+| M6-2 | 实现订单生成 | Not Started | 处理目标仓位和 100 股整数手 |
+| M6-3 | 实现交易成本 | Not Started | 佣金、印花税、滑点 |
+| M6-4 | 实现 A 股交易限制 | Not Started | T+1、涨跌停、停牌 |
+| M6-5 | 实现持仓和现金记账 | Not Started | 组合流水 |
+| M6-6 | 实现绩效指标 | Not Started | 收益、回撤、夏普、换手 |
+| M6-7 | 实现基准对比 | Not Started | 沪深 300 和中证 500 |
+| M6-8 | 添加回测接口和测试 | Not Started | 概览和图表数据 |
 
-## Milestone 7: Frontend Dashboard
+## 里程碑 7：前端工作台
 
-| ID | Task | Status | Notes |
+| ID | 任务 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| M7-1 | Create React project | Not Started | Vite + TypeScript |
-| M7-2 | Create app shell and navigation | Not Started | Professional research-workbench layout |
-| M7-3 | Implement Dashboard page | Not Started | Overview metrics and charts |
-| M7-4 | Implement Weekly Rebalance page | Not Started | Buy, sell, hold, watch tables |
-| M7-5 | Implement Factor Scores page | Not Started | Searchable score table |
-| M7-6 | Implement Backtest Analysis page | Not Started | Equity, drawdown, metrics |
-| M7-7 | Implement Strategy Config page | Not Started | Read-only in MVP |
-| M7-8 | Implement Data Status page | Not Started | Data freshness and task logs |
-| M7-9 | Add frontend tests | Not Started | Component and API-state tests |
+| M7-1 | 创建 React 项目 | Not Started | Vite + TypeScript |
+| M7-2 | 创建整体布局和导航 | Not Started | 专业投研工作台风格 |
+| M7-3 | 实现总览页 | Not Started | 核心指标和图表 |
+| M7-4 | 实现本周调仓页 | Not Started | 买入、卖出、持有、观察表格 |
+| M7-5 | 实现因子评分页 | Not Started | 可搜索、可排序的评分表 |
+| M7-6 | 实现回测分析页 | Not Started | 收益、回撤、指标 |
+| M7-7 | 实现策略配置页 | Not Started | 第一版只读 |
+| M7-8 | 实现数据状态页 | Not Started | 数据新鲜度和任务日志 |
+| M7-9 | 添加前端测试 | Not Started | 组件和接口状态测试 |
 
-## Milestone 8: Reports and Automation
+## 里程碑 8：报告与自动运行
 
-| ID | Task | Status | Notes |
+| ID | 任务 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| M8-1 | Generate weekly HTML report | Not Started | Human-readable weekly summary |
-| M8-2 | Generate Excel or CSV export | Not Started | Rebalance and factor details |
-| M8-3 | Add one-click weekly strategy run | Not Started | Trigger backend job manually |
-| M8-4 | Add scheduled data update | Not Started | Local scheduled run |
-| M8-5 | Add run logs | Not Started | Debug and audit trail |
+| M8-1 | 生成每周 HTML 报告 | Not Started | 人可读的周报 |
+| M8-2 | 生成 Excel 或 CSV 导出 | Not Started | 调仓和因子明细 |
+| M8-3 | 添加一键运行本周策略 | Not Started | 手动触发后端任务 |
+| M8-4 | 添加定时数据更新 | Not Started | 本地定时运行 |
+| M8-5 | 添加运行日志 | Not Started | 便于排查和审计 |
 
-## Milestone 9: Simulation
+## 里程碑 9：模拟运行
 
-| ID | Task | Status | Notes |
+| ID | 任务 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| M9-1 | Add paper trading ledger | Not Started | No real orders |
-| M9-2 | Track suggested trades | Not Started | Compare signal vs simulated outcome |
-| M9-3 | Track simulated net value | Not Started | 1-3 month observation |
-| M9-4 | Add simulation dashboard section | Not Started | Show divergence and results |
+| M9-1 | 添加模拟交易账本 | Not Started | 不产生真实订单 |
+| M9-2 | 跟踪策略建议 | Not Started | 对比信号和模拟结果 |
+| M9-3 | 跟踪模拟组合净值 | Not Started | 连续观察 1-3 个月 |
+| M9-4 | 添加模拟运行页面区域 | Not Started | 展示偏差和结果 |
 
-## Milestone 10: Future Enhancements
+## 里程碑 10：后续增强
 
-| ID | Task | Status | Notes |
+| ID | 任务 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| M10-1 | Add higher-quality data source option | Not Started | Replace or supplement akshare |
-| M10-2 | Add factor effectiveness analysis | Not Started | IC, rank IC, quantile returns |
-| M10-3 | Add industry neutralization | Not Started | Reduce unintended industry exposure |
-| M10-4 | Add parameter experiment tracking | Not Started | Avoid ad hoc optimization |
-| M10-5 | Add notification channel | Not Started | Email, Feishu, or enterprise WeChat |
-| M10-6 | Evaluate broker interface | Not Started | Only after stable simulation |
+| M10-1 | 接入更高质量数据源 | Not Started | 替换或补充 akshare |
+| M10-2 | 添加因子有效性分析 | Not Started | IC、Rank IC、分层收益 |
+| M10-3 | 添加行业中性化 | Not Started | 降低无意行业暴露 |
+| M10-4 | 添加参数实验跟踪 | Not Started | 避免随意调参 |
+| M10-5 | 添加通知渠道 | Not Started | 邮件、飞书、企业微信 |
+| M10-6 | 评估券商接口 | Not Started | 仅在模拟稳定后考虑 |
 
-## Iteration Update Rule
+## 迭代更新规则
 
-At the end of each iteration:
+每次迭代结束时：
 
-1. Mark completed tasks as Done.
-2. Mark active task as In Progress or Blocked.
-3. Add new discovered tasks with IDs.
-4. Update `docs/CHANGELOG.md`.
-5. Update architecture, tests, or constraints when behavior changes.
+1. 将完成的任务标记为 Done。
+2. 将当前任务标记为 In Progress 或 Blocked。
+3. 把新发现的任务加入对应里程碑。
+4. 更新 `docs/CHANGELOG.md`。
+5. 如果行为、架构、测试或约束发生变化，同步更新对应文档。

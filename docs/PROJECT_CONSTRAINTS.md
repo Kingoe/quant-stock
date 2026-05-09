@@ -1,113 +1,114 @@
-# Project Constraints
+# 项目约束
 
-This document defines what the project should and should not do. Update it when project boundaries change.
+本文档定义项目能做什么、不能做什么，以及代码、产品和界面的长期风格。后续如果项目边界发生变化，必须同步更新本文档。
 
-## 1. Product Constraints
+## 1. 产品边界
 
-### Allowed
+### 可以做
 
-- Build an A-share multi-factor stock selection assistant.
-- Generate weekly stock rankings.
-- Generate buy, sell, hold, and watch lists.
-- Run historical backtests.
-- Run paper trading simulation.
-- Show dashboard pages for analysis and review.
-- Export reports for manual trading review.
-- Add higher-quality data sources later.
-- Add notification channels later.
+- 构建 A 股多因子选股辅助系统。
+- 生成每周股票排名。
+- 生成买入、卖出、持有、观察列表。
+- 运行历史回测。
+- 运行模拟交易，也就是 paper trading。
+- 提供前端页面展示分析结果。
+- 导出调仓报告，供人工确认交易。
+- 后续接入更稳定的数据源。
+- 后续增加邮件、飞书、企业微信等通知渠道。
 
-### Not Allowed in MVP
+### 第一版不做
 
-- No automatic broker order placement.
-- No direct live trading.
-- No high-frequency trading.
-- No intraday scalping strategy.
-- No black-box machine learning model before the rule-based baseline is stable.
-- No strategy optimization that only chases historical returns without out-of-sample validation.
-- No use of future financial data before disclosure date.
-- No trading recommendations without visible factor and risk explanation.
+- 不自动向券商下单。
+- 不直接接实盘交易。
+- 不做高频交易。
+- 不做日内 scalping。
+- 不在规则策略稳定前引入黑盒机器学习模型。
+- 不为了历史收益好看而过度调参。
+- 不使用尚未披露的未来财务数据。
+- 不给出没有因子解释和风险提示的买卖建议。
 
-## 2. Investment and Risk Constraints
+## 2. 投资与风险约束
 
-- The system is an assistant, not financial advice.
-- Real trades must be manually reviewed.
-- Backtest results must not be presented as guaranteed future performance.
-- Risk warnings must be visible when data is stale, incomplete, or a trade is blocked.
-- The system must model A-share constraints instead of assuming ideal execution.
-- The first stable strategy should run in simulation for 1-3 months before real money is considered.
+- 系统是辅助工具，不是投资建议。
+- 真实交易必须人工确认。
+- 回测收益不能被表述成未来收益承诺。
+- 数据过期、缺失或交易受阻时，页面必须给出明显提示。
+- 回测要尽量模拟 A 股真实交易限制，不能假设理想成交。
+- 策略稳定前，应先模拟运行 1-3 个月，再考虑小资金人工跟随。
 
-## 3. Strategy Constraints
+## 3. 策略约束
 
-MVP strategy:
+第一版策略范围：
 
-- Base universe: CSI 800.
-- Frequency: weekly rebalance.
-- Style: balanced factor model.
-- Holdings: 10-20 stocks.
-- Factors: valuation, quality, growth, momentum, risk, liquidity.
-- Portfolio controls: single-stock cap, industry cap, cash buffer.
+- 基础股票池：中证 800
+- 调仓频率：周频
+- 策略风格：均衡型多因子
+- 持仓数量：10-20 只股票
+- 因子类型：估值、质量、成长、动量、风险、流动性
+- 组合约束：单票仓位上限、行业仓位上限、现金缓冲
 
-Avoid in MVP:
+第一版避免：
 
-- Minute-level signals.
-- Leveraged exposure.
-- Short selling.
-- Futures, options, margin trading, or securities lending.
-- Complex ensemble models.
-- Overly large factor library.
+- 分钟级信号
+- 杠杆交易
+- 融资融券
+- 期货、期权、可转债等非股票资产
+- 复杂集成模型
+- 过大的因子库
 
-## 4. Data Constraints
+## 4. 数据约束
 
-- Unit tests must not depend on live data.
-- External data provider calls must be isolated behind interfaces.
-- Store raw provider data separately when useful for debugging.
-- Track latest data date and source.
-- Financial data must use disclosure or effective date logic.
-- Missing data should be explicit, not silently filled in a way that changes strategy meaning.
+- 单元测试不能依赖实时行情。
+- 外部数据源必须封装在独立接口后面，方便替换。
+- 必要时保留原始数据，便于排查问题。
+- 必须记录数据来源和最新数据日期。
+- 财务数据必须按披露日期或有效日期使用，避免未来函数。
+- 缺失数据要显式处理，不能用含义不清的方式静默填充。
 
-## 5. Engineering Constraints
+## 5. 工程约束
 
-- Keep modules small and focused.
-- Prefer clear rule-based logic over clever abstractions.
-- Every milestone needs tests.
-- Every iteration updates documentation.
-- Avoid unrelated refactors.
-- Avoid adding services that are not needed for the MVP.
-- SQLite is the default database until there is a real need to migrate.
-- FastAPI is the default backend API framework.
-- React + TypeScript is the default frontend stack.
+- 模块保持小而清晰。
+- 优先使用可解释的规则逻辑，不追求炫技抽象。
+- 每个里程碑都要有对应测试。
+- 每次迭代都要更新文档。
+- 不做无关重构。
+- 不提前引入 MVP 不需要的服务。
+- SQLite 是默认数据库，除非有明确理由再迁移。
+- FastAPI 是默认后端框架。
+- React + TypeScript 是默认前端技术栈。
 
-## 6. Frontend Style
+## 6. 前端风格
 
-The UI should feel like a personal research workstation:
+界面应像一个个人投研工作台：
 
-- Calm.
-- Dense but readable.
-- Professional.
-- Fast to scan.
-- Focused on data, risk, and decisions.
+- 安静
+- 清晰
+- 信息密度适中
+- 专业
+- 方便快速扫描
+- 突出数据、风险和决策
 
-Do:
+应该做到：
 
-- Use tables, filters, sorting, compact metric cards, and charts.
-- Use red and green carefully for financial changes.
-- Show data freshness.
-- Show warnings clearly.
-- Keep navigation predictable.
-- Make empty and error states useful.
+- 使用表格、筛选、排序、紧凑指标卡和图表。
+- 红绿颜色只用于金融涨跌和风险，不做大面积装饰。
+- 明确展示数据更新时间。
+- 风险提示清楚可见。
+- 导航结构稳定。
+- 空状态和错误状态要有实际帮助。
 
-Do not:
+不要做：
 
-- Build a marketing landing page.
-- Use decorative finance "big screen" effects.
-- Hide important assumptions behind pretty charts.
-- Use overly large hero sections.
-- Use vague labels like "AI score" without explanation.
-- Let charts or tables overflow on common laptop widths.
+- 营销落地页。
+- 炫酷但无助于决策的金融大屏。
+- 用漂亮图表隐藏重要假设。
+- 夸张的大标题和 hero 区域。
+- 没解释的“AI 分数”。
+- 在普通笔记本宽度下溢出的图表或表格。
 
-## 7. Documentation Constraints
+## 7. 文档约束
 
-Required documents:
+必备文档：
 
 - `README.md`
 - `docs/TECHNICAL_ARCHITECTURE.md`
@@ -116,19 +117,27 @@ Required documents:
 - `docs/PROJECT_CONSTRAINTS.md`
 - `docs/CHANGELOG.md`
 
-Update rule:
+更新规则：
 
-- Architecture change: update `TECHNICAL_ARCHITECTURE.md`.
-- Task progress: update `TASK_PLAN.md`.
-- New or changed behavior: update `TEST_CASES.md`.
-- Boundary or style change: update `PROJECT_CONSTRAINTS.md`.
-- Completed user-visible or architectural change: update `CHANGELOG.md`.
+- 架构变化：更新 `TECHNICAL_ARCHITECTURE.md`
+- 任务进展：更新 `TASK_PLAN.md`
+- 行为或测试范围变化：更新 `TEST_CASES.md`
+- 项目边界或风格变化：更新 `PROJECT_CONSTRAINTS.md`
+- 完成用户可见或架构级变化：更新 `CHANGELOG.md`
 
-## 8. Naming and Code Style
+## 8. 文档语言风格
 
-- Use descriptive names.
-- Keep financial terms explicit.
-- Prefer `rebalance_date`, `trade_date`, `score_date`, and `effective_date` over vague names like `date`.
-- Prefer `stock_code` over `code` in public interfaces.
-- Prefer `factor_score` and `total_score` over vague names like `score`.
-- Keep API response fields stable and documented once the frontend depends on them.
+- 文档中文优先。
+- 技术名词可以保留英文原词，例如 FastAPI、SQLite、backtest、paper trading。
+- 第一次出现英文术语时，尽量给出中文解释。
+- 避免整篇英文说明，降低后续维护门槛。
+- 任务描述要具体，不写含糊的“优化一下”“完善功能”。
+
+## 9. 命名与代码风格
+
+- 命名要清楚表达业务含义。
+- 金融术语尽量明确。
+- 公共接口中优先使用 `stock_code`，不要只写 `code`。
+- 日期字段优先使用明确名称，例如 `rebalance_date`、`trade_date`、`score_date`、`effective_date`。
+- 分数字段优先使用 `factor_score`、`total_score`。
+- 前端依赖的 API 字段一旦确定，要保持稳定并记录。
