@@ -2,6 +2,9 @@
 
 ## 2026-05-09
 
+- 新增股票池查询模块，支持按调仓日期查询中证800基础股票池。
+- 新增 get_universe_stock_codes 返回目标日期可用指数成分中的活跃股票代码。
+- 新增股票池查询测试，覆盖活跃股票、ST过滤、非活跃股票、最新可用日期、空列表。
 - 新增数据状态检查模块，支持按数据类型查询最新日期和数据状态汇总。
 - 新增 get_latest_date_by_type 支持 daily_prices、valuation_metrics、financial_metrics 数据类型查询。
 - 新增 get_data_status 返回各数据类型的最新日期和是否有数据的标志。

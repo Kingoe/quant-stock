@@ -31,6 +31,9 @@ from app.data.trading_calendar import (
     get_open_trade_dates,
     load_trading_calendar,
 )
+from app.data.universe import (
+    get_universe_stock_codes,
+)
 from app.data.valuation import (
     ValuationRecord,
     get_valuation_by_trade_date,
@@ -56,6 +59,7 @@ __all__ = [
     "get_open_trade_dates",
     "get_prices_by_trade_date",
     "get_stock",
+    "get_universe_stock_codes",
     "get_valuation_by_trade_date",
     "get_valuations",
     "load_daily_prices",
