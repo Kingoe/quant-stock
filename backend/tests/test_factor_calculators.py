@@ -1,5 +1,7 @@
 from datetime import date, timedelta
 
+import pytest
+
 from app.data import (
     DailyPriceRecord,
     FinancialRecord,
@@ -15,6 +17,8 @@ from app.data import (
     load_financial_metrics,
     load_stock_basics,
     load_valuations,
+    rank_factor_values,
+    winsorize_factor_values,
 )
 from app.storage import initialize_schema, open_sqlite_connection
 
@@ -955,6 +959,89 @@ def test_liquidity_factor_handles_insufficient_amount_history(tmp_path) -> None:
 
     assert scores["000001"] > scores["600000"] > scores["600519"]
     assert scores["600000"] == 0.5
+
+
+def test_winsorize_factor_values_clamps_extreme_values() -> None:
+    result = winsorize_factor_values(
+        {
+            "600000": 1.0,
+            "000001": 2.0,
+            "600519": 3.0,
+            "300750": 100.0,
+        },
+        lower_quantile=0.25,
+        upper_quantile=0.75,
+    )
+
+    assert result["600000"] == pytest.approx(1.75)
+    assert result["000001"] == 2.0
+    assert result["600519"] == 3.0
+    assert result["300750"] == pytest.approx(27.25)
+
+
+def test_rank_factor_values_scores_higher_value_higher() -> None:
+    scores = rank_factor_values(
+        {
+            "600000": 10.0,
+            "000001": 20.0,
+            "600519": 30.0,
+        },
+        higher_is_better=True,
+        winsorize=False,
+    )
+
+    assert scores["600519"] > scores["000001"] > scores["600000"]
+    assert scores["600000"] == 0.0
+    assert scores["600519"] == 1.0
+
+
+def test_rank_factor_values_scores_lower_value_higher() -> None:
+    scores = rank_factor_values(
+        {
+            "600000": 5.0,
+            "000001": 10.0,
+            "600519": 30.0,
+        },
+        higher_is_better=False,
+        winsorize=False,
+    )
+
+    assert scores["600000"] > scores["000001"] > scores["600519"]
+    assert scores["600000"] == 1.0
+    assert scores["600519"] == 0.0
+
+
+def test_rank_factor_values_handles_missing_and_zero_values() -> None:
+    scores = rank_factor_values(
+        {
+            "600000": 0.0,
+            "000001": None,
+            "600519": 10.0,
+            "300750": 20.0,
+        },
+        higher_is_better=True,
+        allow_zero=False,
+        winsorize=False,
+    )
+
+    assert scores["300750"] > scores["600519"]
+    assert scores["600000"] == 0.5
+    assert scores["000001"] == 0.5
+
+
+def test_rank_factor_values_can_treat_zero_as_valid() -> None:
+    scores = rank_factor_values(
+        {
+            "600000": 0.0,
+            "000001": 0.1,
+            "600519": 0.3,
+        },
+        higher_is_better=False,
+        allow_zero=True,
+        winsorize=False,
+    )
+
+    assert scores["600000"] > scores["000001"] > scores["600519"]
 
 
 def _build_amount_records(

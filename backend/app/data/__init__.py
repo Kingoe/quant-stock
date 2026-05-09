@@ -11,6 +11,8 @@ from app.data.factor_calculators import (
     calculate_quality_factor,
     calculate_risk_factor,
     calculate_valuation_factor,
+    rank_factor_values,
+    winsorize_factor_values,
 )
 from app.data.factors import (
     get_aligned_daily_price,
@@ -100,4 +102,6 @@ __all__ = [
     "load_stock_basics",
     "load_trading_calendar",
     "load_valuations",
+    "rank_factor_values",
+    "winsorize_factor_values",
 ]

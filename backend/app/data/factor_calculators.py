@@ -436,51 +436,120 @@ def _rank_values(values: Mapping[str, float | None], reverse: bool) -> dict[str,
     Returns:
         股票代码到归一化得分的映射 (0-1)
     """
-    # 过滤空值和负值
-    valid_items = [(code, v) for code, v in values.items() if v is not None and v > 0]
-
-    if len(valid_items) < 2:
-        # 如果有效值少于 2 个，所有股票返回 0.5
-        return {code: 0.5 for code in values}
-
-    # 按值排序
-    sorted_items = sorted(valid_items, key=lambda x: x[1], reverse=reverse)
-    count = len(sorted_items)
-
-    # 计算排名得分
-    scores: dict[str, float] = {}
-    for idx, (code, _) in enumerate(sorted_items):
-        # 归一化到 0-1 范围
-        scores[code] = idx / (count - 1)
-
-    # 未包含的股票返回 0.5
-    for code in values:
-        if code not in scores:
-            scores[code] = 0.5
-
-    return scores
+    return rank_factor_values(
+        values,
+        higher_is_better=not reverse,
+        allow_zero=False,
+        winsorize=False,
+    )
 
 
 def _rank_non_negative_values(
     values: Mapping[str, float | None], reverse: bool
 ) -> dict[str, float]:
     """将非负值转换为排名得分，适用于最大回撤等 0 也有效的指标。"""
+    return rank_factor_values(
+        values,
+        higher_is_better=not reverse,
+        allow_zero=True,
+        winsorize=False,
+    )
+
+
+def rank_factor_values(
+    values: Mapping[str, float | None],
+    *,
+    higher_is_better: bool,
+    allow_zero: bool = False,
+    winsorize: bool = True,
+    lower_quantile: float = 0.05,
+    upper_quantile: float = 0.95,
+) -> dict[str, float]:
+    """将因子原始值转换为 0-1 排名得分。"""
     valid_items = [
-        (code, value) for code, value in values.items() if value is not None and value >= 0
+        (code, value)
+        for code, value in values.items()
+        if value is not None and (value >= 0 if allow_zero else value > 0)
     ]
 
     if len(valid_items) < 2:
         return {code: 0.5 for code in values}
 
-    sorted_items = sorted(valid_items, key=lambda item: item[1], reverse=reverse)
+    rank_values: Mapping[str, float | None]
+    if winsorize:
+        rank_values = winsorize_factor_values(
+            dict(valid_items),
+            lower_quantile=lower_quantile,
+            upper_quantile=upper_quantile,
+        )
+    else:
+        rank_values = dict(valid_items)
+
+    sorted_items = sorted(
+        rank_values.items(),
+        key=lambda item: item[1] if item[1] is not None else 0.0,
+        reverse=not higher_is_better,
+    )
     count = len(sorted_items)
 
     scores: dict[str, float] = {}
-    for idx, (code, _) in enumerate(sorted_items):
-        scores[code] = idx / (count - 1)
+    index = 0
+    while index < count:
+        _, value = sorted_items[index]
+        next_index = index + 1
+        while next_index < count and sorted_items[next_index][1] == value:
+            next_index += 1
+
+        rank_score = ((index + next_index - 1) / 2) / (count - 1)
+        for item_index in range(index, next_index):
+            code, _ = sorted_items[item_index]
+            scores[code] = rank_score
+
+        index = next_index
 
     for code in values:
         if code not in scores:
             scores[code] = 0.5
 
     return scores
+
+
+def winsorize_factor_values(
+    values: Mapping[str, float | None],
+    *,
+    lower_quantile: float = 0.05,
+    upper_quantile: float = 0.95,
+) -> dict[str, float | None]:
+    """按分位数对因子值做去极值处理。"""
+    if lower_quantile < 0 or upper_quantile > 1 or lower_quantile > upper_quantile:
+        raise ValueError("quantiles must satisfy 0 <= lower <= upper <= 1")
+
+    valid_items = [(code, value) for code, value in values.items() if value is not None]
+
+    if len(valid_items) < 2:
+        return dict(values)
+
+    sorted_values = sorted(value for _, value in valid_items)
+    lower_bound = _quantile(sorted_values, lower_quantile)
+    upper_bound = _quantile(sorted_values, upper_quantile)
+
+    winsorized: dict[str, float | None] = {}
+    for code in values:
+        value = values[code]
+        if value is None:
+            winsorized[code] = None
+        else:
+            winsorized[code] = min(max(value, lower_bound), upper_bound)
+
+    return winsorized
+
+
+def _quantile(sorted_values: list[float], quantile: float) -> float:
+    position = (len(sorted_values) - 1) * quantile
+    lower_index = int(position)
+    upper_index = min(lower_index + 1, len(sorted_values) - 1)
+    fraction = position - lower_index
+    return (
+        sorted_values[lower_index]
+        + (sorted_values[upper_index] - sorted_values[lower_index]) * fraction
+    )
