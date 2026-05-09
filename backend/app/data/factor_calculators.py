@@ -132,9 +132,7 @@ def calculate_valuation_factor(
     return scores
 
 
-def _rank_values(
-    values: Mapping[str, float | None], reverse: bool
-) -> dict[str, float]:
+def _rank_values(values: Mapping[str, float | None], reverse: bool) -> dict[str, float]:
     """将值转换为排名得分 (0-1)
 
     Args:

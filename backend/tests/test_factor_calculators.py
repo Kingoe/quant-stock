@@ -33,7 +33,9 @@ def test_valuation_factor_scores_low_pe_higher(tmp_path) -> None:
             ],
         )
 
-        scores = calculate_valuation_factor(connection, ["600000", "000001", "600519"], "2026-05-07")
+        scores = calculate_valuation_factor(
+            connection, ["600000", "000001", "600519"], "2026-05-07"
+        )
 
     # PE 越低得分越高
     assert scores["600000"] > scores["000001"]
@@ -94,7 +96,12 @@ def test_valuation_factor_scores_high_dividend_yield_higher(tmp_path) -> None:
         )
 
         scores = calculate_valuation_factor(
-            connection, ["600000", "000001", "600519"], "2026-05-07", pe_weight=0.0, pb_weight=0.0, dividend_yield_weight=1.0
+            connection,
+            ["600000", "000001", "600519"],
+            "2026-05-07",
+            pe_weight=0.0,
+            pb_weight=0.0,
+            dividend_yield_weight=1.0,
         )
 
     # 股息率越高得分越高
@@ -124,7 +131,9 @@ def test_valuation_factor_handles_missing_valuation_data(tmp_path) -> None:
             ],
         )
 
-        scores = calculate_valuation_factor(connection, ["600000", "000001", "600519"], "2026-05-07")
+        scores = calculate_valuation_factor(
+            connection, ["600000", "000001", "600519"], "2026-05-07"
+        )
 
     # 贵州茅台因为缺失估值数据不会被包含在结果中
     assert "600519" not in scores
@@ -199,6 +208,7 @@ def test_valuation_factor_uses_aligned_valuation_data(tmp_path) -> None:
     assert len(scores) == 1
     assert scores["600000"] >= 0
 
+
 def test_quality_factor_scores_high_roe_higher(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'quant.db'}"
 
@@ -215,9 +225,15 @@ def test_quality_factor_scores_high_roe_higher(tmp_path) -> None:
         load_financial_metrics(
             connection,
             [
-                FinancialRecord("600000", "2026-03-31", "2026-04-25", 10.0, 30.0, 5.0, 8.0, 1000.0, 500.0),
-                FinancialRecord("000001", "2026-03-31", "2026-04-25", 12.0, 32.0, 6.0, 10.0, 1200.0, 600.0),
-                FinancialRecord("600519", "2026-03-31", "2026-04-25", 25.0, 35.0, 15.0, 20.0, 2500.0, 1250.0),
+                FinancialRecord(
+                    "600000", "2026-03-31", "2026-04-25", 10.0, 30.0, 5.0, 8.0, 1000.0, 500.0
+                ),
+                FinancialRecord(
+                    "000001", "2026-03-31", "2026-04-25", 12.0, 32.0, 6.0, 10.0, 1200.0, 600.0
+                ),
+                FinancialRecord(
+                    "600519", "2026-03-31", "2026-04-25", 25.0, 35.0, 15.0, 20.0, 2500.0, 1250.0
+                ),
             ],
         )
 
@@ -246,9 +262,15 @@ def test_quality_factor_scores_high_gross_margin_higher(tmp_path) -> None:
         load_financial_metrics(
             connection,
             [
-                FinancialRecord("600000", "2026-03-31", "2026-04-25", 10.0, 30.0, 5.0, 8.0, 1000.0, 500.0),
-                FinancialRecord("000001", "2026-03-31", "2026-04-25", 12.0, 32.0, 6.0, 10.0, 1200.0, 600.0),
-                FinancialRecord("600519", "2026-03-31", "2026-04-25", 25.0, 35.0, 15.0, 20.0, 2500.0, 1250.0),
+                FinancialRecord(
+                    "600000", "2026-03-31", "2026-04-25", 10.0, 30.0, 5.0, 8.0, 1000.0, 500.0
+                ),
+                FinancialRecord(
+                    "000001", "2026-03-31", "2026-04-25", 12.0, 32.0, 6.0, 10.0, 1200.0, 600.0
+                ),
+                FinancialRecord(
+                    "600519", "2026-03-31", "2026-04-25", 25.0, 35.0, 15.0, 20.0, 2500.0, 1250.0
+                ),
             ],
         )
 
@@ -279,9 +301,15 @@ def test_quality_factor_scores_high_cash_flow_quality_higher(
         load_financial_metrics(
             connection,
             [
-                FinancialRecord("600000", "2026-03-31", "2026-04-25", 10.0, 30.0, 5.0, 8.0, 800.0, 500.0),
-                FinancialRecord("000001", "2026-03-31", "2026-04-25", 12.0, 32.0, 6.0, 10.0, 1000.0, 600.0),
-                FinancialRecord("600519", "2026-03-31", "2026-04-25", 25.0, 35.0, 15.0, 20.0, 3500.0, 1250.0),
+                FinancialRecord(
+                    "600000", "2026-03-31", "2026-04-25", 10.0, 30.0, 5.0, 8.0, 800.0, 500.0
+                ),
+                FinancialRecord(
+                    "000001", "2026-03-31", "2026-04-25", 12.0, 32.0, 6.0, 10.0, 1000.0, 600.0
+                ),
+                FinancialRecord(
+                    "600519", "2026-03-31", "2026-04-25", 25.0, 35.0, 15.0, 20.0, 3500.0, 1250.0
+                ),
             ],
         )
 
@@ -310,15 +338,17 @@ def test_quality_factor_handles_missing_financial_data(tmp_path) -> None:
         load_financial_metrics(
             connection,
             [
-                FinancialRecord("600000", "2026-03-31", "2026-04-25", 10.0, 30.0, 5.0, 8.0, 1000.0, 500.0),
-                FinancialRecord("000001", "2026-03-31", "2026-04-25", 12.0, 32.0, 6.0, 10.0, 1200.0, 600.0),
+                FinancialRecord(
+                    "600000", "2026-03-31", "2026-04-25", 10.0, 30.0, 5.0, 8.0, 1000.0, 500.0
+                ),
+                FinancialRecord(
+                    "000001", "2026-03-31", "2026-04-25", 12.0, 32.0, 6.0, 10.0, 1200.0, 600.0
+                ),
                 # 贵州茅台没有财务数据
             ],
         )
 
-        scores = calculate_quality_factor(
-            connection, ["600000", "000001", "600519"], "2026-05-07"
-        )
+        scores = calculate_quality_factor(connection, ["600000", "000001", "600519"], "2026-05-07")
 
     # 贵州茅台因为缺失财务数据不会被包含在结果中
     assert "600519" not in scores
@@ -355,7 +385,9 @@ def test_quality_factor_handles_null_sub_indicators(tmp_path) -> None:
         load_financial_metrics(
             connection,
             [
-                FinancialRecord("600000", "2026-03-31", "2026-04-25", 10.0, 30.0, 5.0, 8.0, 1000.0, 500.0),
+                FinancialRecord(
+                    "600000", "2026-03-31", "2026-04-25", 10.0, 30.0, 5.0, 8.0, 1000.0, 500.0
+                ),
                 FinancialRecord("000001", "2026-03-31", "2026-04-25", None, None, None, None, None),
             ],
         )
@@ -382,8 +414,12 @@ def test_quality_factor_uses_aligned_financial_data(tmp_path) -> None:
         load_financial_metrics(
             connection,
             [
-                FinancialRecord("600000", "2026-03-31", "2026-04-20", 10.0, 30.0, 5.0, 8.0, 1000.0, 500.0),
-                FinancialRecord("600000", "2026-06-30", "2026-08-10", 12.0, 32.0, 6.0, 10.0, 1200.0, 600.0),
+                FinancialRecord(
+                    "600000", "2026-03-31", "2026-04-20", 10.0, 30.0, 5.0, 8.0, 1000.0, 500.0
+                ),
+                FinancialRecord(
+                    "600000", "2026-06-30", "2026-08-10", 12.0, 32.0, 6.0, 10.0, 1200.0, 600.0
+                ),
                 # 评分日是 2026-05-07，应该使用 2026-03-31 的数据（已披露）
             ],
         )
@@ -409,14 +445,23 @@ def test_quality_factor_handles_zero_net_profit(tmp_path) -> None:
         load_financial_metrics(
             connection,
             [
-                FinancialRecord("600000", "2026-03-31", "2026-04-25", 10.0, 30.0, 5.0, 8.0, 1000.0, 500.0),
+                FinancialRecord(
+                    "600000", "2026-03-31", "2026-04-25", 10.0, 30.0, 5.0, 8.0, 1000.0, 500.0
+                ),
                 # 净利润为 0，现金流质量应为 None
-                FinancialRecord("000001", "2026-03-31", "2026-04-25", 12.0, 32.0, 6.0, 10.0, 1800.0, 0.0),
+                FinancialRecord(
+                    "000001", "2026-03-31", "2026-04-25", 12.0, 32.0, 6.0, 10.0, 1800.0, 0.0
+                ),
             ],
         )
 
         scores = calculate_quality_factor(
-            connection, ["600000", "000001"], "2026-05-07", roe_weight=0.0, gross_margin_weight=0.0, cash_flow_weight=1.0
+            connection,
+            ["600000", "000001"],
+            "2026-05-07",
+            roe_weight=0.0,
+            gross_margin_weight=0.0,
+            cash_flow_weight=1.0,
         )
 
     # 净利润为 0 的股票在现金流质量子因子上应该得到中等分数

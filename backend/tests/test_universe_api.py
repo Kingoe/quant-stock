@@ -67,10 +67,62 @@ def test_universe_endpoint_returns_filtered_stocks(tmp_path) -> None:
         load_daily_prices(
             connection,
             [
-                DailyPriceRecord("600000", "2026-05-07", 10.0, 11.0, 9.5, 10.5, 1000000, 10500000.0, None, False, False, False),
-                DailyPriceRecord("000001", "2026-05-07", 10.0, 10.5, 9.8, 10.3, 500000, 5000000.0, None, False, False, False),
-                DailyPriceRecord("600519", "2026-05-07", 1800.0, 1850.0, 1780.0, 1830.0, 50000, 91500000.0, None, False, False, False),
-                DailyPriceRecord("000002", "2026-05-07", 8.0, 8.5, 7.8, 8.2, 2000000, 16400000.0, None, False, False, False),
+                DailyPriceRecord(
+                    "600000",
+                    "2026-05-07",
+                    10.0,
+                    11.0,
+                    9.5,
+                    10.5,
+                    1000000,
+                    10500000.0,
+                    None,
+                    False,
+                    False,
+                    False,
+                ),
+                DailyPriceRecord(
+                    "000001",
+                    "2026-05-07",
+                    10.0,
+                    10.5,
+                    9.8,
+                    10.3,
+                    500000,
+                    5000000.0,
+                    None,
+                    False,
+                    False,
+                    False,
+                ),
+                DailyPriceRecord(
+                    "600519",
+                    "2026-05-07",
+                    1800.0,
+                    1850.0,
+                    1780.0,
+                    1830.0,
+                    50000,
+                    91500000.0,
+                    None,
+                    False,
+                    False,
+                    False,
+                ),
+                DailyPriceRecord(
+                    "000002",
+                    "2026-05-07",
+                    8.0,
+                    8.5,
+                    7.8,
+                    8.2,
+                    2000000,
+                    16400000.0,
+                    None,
+                    False,
+                    False,
+                    False,
+                ),
             ],
         )
         load_valuations(
@@ -125,11 +177,76 @@ def test_universe_endpoint_applies_all_filters(tmp_path) -> None:
         load_daily_prices(
             connection,
             [
-                DailyPriceRecord("600000", "2026-05-07", 10.0, 11.0, 9.5, 10.5, 1000000, 10500000.0, None, False, False, False),
-                DailyPriceRecord("000001", "2026-05-07", 10.0, 10.5, 9.8, 10.3, 500000, 5000000.0, None, False, False, False),
-                DailyPriceRecord("600519", "2026-05-07", 1800.0, 1850.0, 1780.0, 1830.0, 50000, 91500000.0, None, False, False, False),
-                DailyPriceRecord("000002", "2026-05-07", 8.0, 8.5, 7.8, 8.2, 2000000, 16400000.0, None, False, False, False),
-                DailyPriceRecord("600527", "2026-05-07", 8.0, 8.5, 7.8, 8.2, 2000000, 16400000.0, None, False, False, False),
+                DailyPriceRecord(
+                    "600000",
+                    "2026-05-07",
+                    10.0,
+                    11.0,
+                    9.5,
+                    10.5,
+                    1000000,
+                    10500000.0,
+                    None,
+                    False,
+                    False,
+                    False,
+                ),
+                DailyPriceRecord(
+                    "000001",
+                    "2026-05-07",
+                    10.0,
+                    10.5,
+                    9.8,
+                    10.3,
+                    500000,
+                    5000000.0,
+                    None,
+                    False,
+                    False,
+                    False,
+                ),
+                DailyPriceRecord(
+                    "600519",
+                    "2026-05-07",
+                    1800.0,
+                    1850.0,
+                    1780.0,
+                    1830.0,
+                    50000,
+                    91500000.0,
+                    None,
+                    False,
+                    False,
+                    False,
+                ),
+                DailyPriceRecord(
+                    "000002",
+                    "2026-05-07",
+                    8.0,
+                    8.5,
+                    7.8,
+                    8.2,
+                    2000000,
+                    16400000.0,
+                    None,
+                    False,
+                    False,
+                    False,
+                ),
+                DailyPriceRecord(
+                    "600527",
+                    "2026-05-07",
+                    8.0,
+                    8.5,
+                    7.8,
+                    8.2,
+                    2000000,
+                    16400000.0,
+                    None,
+                    False,
+                    False,
+                    False,
+                ),
             ],
         )
         load_valuations(
@@ -186,9 +303,48 @@ def test_universe_endpoint_supports_pagination(tmp_path) -> None:
         load_daily_prices(
             connection,
             [
-                DailyPriceRecord("600000", "2026-05-07", 10.0, 11.0, 9.5, 10.5, 1000000, 10500000.0, None, False, False, False),
-                DailyPriceRecord("000001", "2026-05-07", 10.0, 10.5, 9.8, 10.3, 500000, 5000000.0, None, False, False, False),
-                DailyPriceRecord("600519", "2026-05-07", 1800.0, 1850.0, 1780.0, 1830.0, 50000, 91500000.0, None, False, False, False),
+                DailyPriceRecord(
+                    "600000",
+                    "2026-05-07",
+                    10.0,
+                    11.0,
+                    9.5,
+                    10.5,
+                    1000000,
+                    10500000.0,
+                    None,
+                    False,
+                    False,
+                    False,
+                ),
+                DailyPriceRecord(
+                    "000001",
+                    "2026-05-07",
+                    10.0,
+                    10.5,
+                    9.8,
+                    10.3,
+                    500000,
+                    5000000.0,
+                    None,
+                    False,
+                    False,
+                    False,
+                ),
+                DailyPriceRecord(
+                    "600519",
+                    "2026-05-07",
+                    1800.0,
+                    1850.0,
+                    1780.0,
+                    1830.0,
+                    50000,
+                    91500000.0,
+                    None,
+                    False,
+                    False,
+                    False,
+                ),
             ],
         )
         load_valuations(
@@ -251,22 +407,33 @@ def test_universe_endpoint_returns_api_convention_response(tmp_path) -> None:
             [StockBasicRecord("600000", "浦发银行", "SH", "2000-01-01", "银行", False, "active")],
         )
         load_index_constituents(
-            connection,
-            [IndexConstituentRecord("000906", "600000", "2026-05-01", 0.5)]
+            connection, [IndexConstituentRecord("000906", "600000", "2026-05-01", 0.5)]
         )
         load_daily_prices(
             connection,
-            [DailyPriceRecord("600000", "2026-05-07", 10.0, 11.0, 9.5, 10.5, 1000000, 10500000.0, None, False, False, False)]
+            [
+                DailyPriceRecord(
+                    "600000",
+                    "2026-05-07",
+                    10.0,
+                    11.0,
+                    9.5,
+                    10.5,
+                    1000000,
+                    10500000.0,
+                    None,
+                    False,
+                    False,
+                    False,
+                )
+            ],
         )
-        load_valuations(
-            connection,
-            [ValuationRecord("600000", "2026-05-07", 5.0, 0.8, None)]
-        )
+        load_valuations(connection, [ValuationRecord("600000", "2026-05-07", 5.0, 0.8, None)])
 
     response = client.get(
         "/api/universe",
         params={"index_code": "000906", "trade_date": "2026-05-07", "database_url": database_url},
-        )
+    )
 
     assert response.status_code == 200
     body = response.json()

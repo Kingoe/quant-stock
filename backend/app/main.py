@@ -89,9 +89,13 @@ def get_universe(
 
         # 应用过滤器
         stock_codes = filter_stocks(connection, stock_codes)
-        stock_codes = filter_stocks_by_listing_date(connection, stock_codes, trade_date, min_list_months)
+        stock_codes = filter_stocks_by_listing_date(
+            connection, stock_codes, trade_date, min_list_months
+        )
         stock_codes = filter_stocks_by_suspension(connection, stock_codes, trade_date)
-        stock_codes = filter_stocks_by_liquidity(connection, stock_codes, trade_date, min_avg_amount)
+        stock_codes = filter_stocks_by_liquidity(
+            connection, stock_codes, trade_date, min_avg_amount
+        )
         stock_codes = filter_stocks_by_abnormal_valuation(
             connection, stock_codes, trade_date, max_pe, max_pb
         )
@@ -103,8 +107,12 @@ def get_universe(
         paged_codes = stock_codes[start_idx:end_idx]
 
         # 获取股票详情
-        price_rows = {row["stock_code"]: row for row in get_prices_by_trade_date(connection, trade_date)}
-        valuation_rows = {row["stock_code"]: row for row in get_valuation_by_trade_date(connection, trade_date)}
+        price_rows = {
+            row["stock_code"]: row for row in get_prices_by_trade_date(connection, trade_date)
+        }
+        valuation_rows = {
+            row["stock_code"]: row for row in get_valuation_by_trade_date(connection, trade_date)
+        }
 
         items = []
         for stock_code in paged_codes:
@@ -118,9 +126,15 @@ def get_universe(
                         stock_name=stock["stock_name"],
                         list_date=stock["list_date"],
                         industry=stock["industry"] if stock["industry"] else "",
-                        pe=valuation_row["pe"] if valuation_row and valuation_row["pe"] is not None else None,
-                        pb=valuation_row["pb"] if valuation_row and valuation_row["pb"] is not None else None,
-                        avg_amount=price_row["amount"] if price_row and price_row["amount"] is not None else None,
+                        pe=valuation_row["pe"]
+                        if valuation_row and valuation_row["pe"] is not None
+                        else None,
+                        pb=valuation_row["pb"]
+                        if valuation_row and valuation_row["pb"] is not None
+                        else None,
+                        avg_amount=price_row["amount"]
+                        if price_row and price_row["amount"] is not None
+                        else None,
                         is_suspended=bool(price_row["is_suspended"]) if price_row else False,
                     )
                 )
@@ -133,4 +147,3 @@ def get_universe(
                 pagination=PaginationMeta(page=page, page_size=page_size, total=total),
             ).model_dump(),
         }
-
