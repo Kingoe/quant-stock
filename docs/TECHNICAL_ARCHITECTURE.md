@@ -134,6 +134,7 @@ quant-stock/
 
 - 交易日历加载：写入 `trading_calendar` 表，维护上一/下一开市日，支持开市日期查询。
 - 股票基础信息加载：写入 `stocks` 表，支持更新和 active 非 ST 股票代码查询。
+- 指数成分加载：写入 `index_constituents` 表，支持权重更新、按日期查询和最新可用成分查询。
 
 ## 6. 股票池规则
 

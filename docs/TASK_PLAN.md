@@ -51,7 +51,7 @@
 | M2-1 | 定义数据库表结构 | Done | 已定义 stocks、trading_calendar、index_constituents、daily_prices、valuation_metrics、financial_metrics、strategy_runs、rebalance_recommendations |
 | M2-2 | 实现交易日历加载 | Done | 已支持交易日历入库、更新、开市日期查询和下一交易日查询 |
 | M2-3 | 实现股票基础信息加载 | Done | 已支持股票基础信息入库、更新、按代码查询和 active 股票代码查询 |
-| M2-4 | 实现中证 800 成分股加载 | Not Started | 第一版基础股票池 |
+| M2-4 | 实现中证 800 成分股加载 | Done | 已支持指数成分入库、权重更新、按日期查询和按目标日期查询最新可用成分 |
 | M2-5 | 实现日行情加载 | Not Started | 开高低收、成交量、成交额 |
 | M2-6 | 实现估值数据加载 | Not Started | PE、PB、PS、股息率 |
 | M2-7 | 实现财务数据加载 | Not Started | ROE、毛利率、成长、现金流 |
