@@ -27,6 +27,12 @@
 | M0-8 | 将文档调整为中文优先 | Done | 保留必要英文技术术语 |
 | M0-9 | 创建迭代流程文档 | Done | 见 `docs/ITERATION_WORKFLOW.md` |
 | M0-10 | 明确任务必须按规划顺序执行 | Done | 默认按里程碑和任务 ID 顺序推进 |
+| M0-11 | 明确开发环境和启动方式 | Done | 见 `docs/DEVELOPMENT_SETUP.md` |
+| M0-12 | 明确代码质量和测试工具 | Done | 见 `docs/DEVELOPMENT_SETUP.md` |
+| M0-13 | 新增架构决策记录 | Done | 见 `docs/DECISIONS.md` |
+| M0-14 | 新增当前迭代验收模板 | Done | 见 `docs/CURRENT_ITERATION.md` |
+| M0-15 | 新增数据源预研计划 | Done | 见 `docs/DATA_SOURCE_PLAN.md` |
+| M0-16 | 明确 API 响应约定 | Done | 见 `docs/API_CONVENTIONS.md` |
 
 ## 里程碑 1：后端基础
 

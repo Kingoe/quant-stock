@@ -116,6 +116,11 @@
 - `docs/TEST_CASES.md`
 - `docs/PROJECT_CONSTRAINTS.md`
 - `docs/ITERATION_WORKFLOW.md`
+- `docs/DEVELOPMENT_SETUP.md`
+- `docs/CURRENT_ITERATION.md`
+- `docs/DECISIONS.md`
+- `docs/DATA_SOURCE_PLAN.md`
+- `docs/API_CONVENTIONS.md`
 - `docs/CHANGELOG.md`
 
 更新规则：
@@ -125,11 +130,18 @@
 - 行为或测试范围变化：更新 `TEST_CASES.md`
 - 项目边界或风格变化：更新 `PROJECT_CONSTRAINTS.md`
 - 迭代方式变化：更新 `ITERATION_WORKFLOW.md`
+- 开发环境变化：更新 `DEVELOPMENT_SETUP.md`
+- 当前任务验收标准变化：更新 `CURRENT_ITERATION.md`
+- 关键技术选择变化：更新 `DECISIONS.md`
+- 数据源变化：更新 `DATA_SOURCE_PLAN.md`
+- API 响应格式变化：更新 `API_CONVENTIONS.md`
 - 完成用户可见或架构级变化：更新 `CHANGELOG.md`
 
 每轮开发必须遵守 `docs/ITERATION_WORKFLOW.md`。没有完成验证的功能不能标记为完成。
 
 任务执行默认按 `docs/TASK_PLAN.md` 的里程碑顺序和任务 ID 顺序推进。除非任务被阻塞、用户明确调整优先级，或存在必要的验证配套工作，否则不能随机跳选任务。
+
+写代码前必须确认 `docs/DEVELOPMENT_SETUP.md`、`docs/CURRENT_ITERATION.md`、`docs/DECISIONS.md`、`docs/DATA_SOURCE_PLAN.md` 和 `docs/API_CONVENTIONS.md` 已经覆盖当前任务需要的前置信息。
 
 ## 8. 文档语言风格
 

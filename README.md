@@ -23,6 +23,11 @@
 - [测试用例](docs/TEST_CASES.md)
 - [项目约束](docs/PROJECT_CONSTRAINTS.md)
 - [迭代流程](docs/ITERATION_WORKFLOW.md)
+- [开发环境](docs/DEVELOPMENT_SETUP.md)
+- [当前迭代](docs/CURRENT_ITERATION.md)
+- [架构决策记录](docs/DECISIONS.md)
+- [数据源计划](docs/DATA_SOURCE_PLAN.md)
+- [API 约定](docs/API_CONVENTIONS.md)
 - [更新日志](docs/CHANGELOG.md)
 
 ## 第一版范围
@@ -47,6 +52,11 @@
 - 行为或测试范围变化：更新 [测试用例](docs/TEST_CASES.md)
 - 项目边界或风格变化：更新 [项目约束](docs/PROJECT_CONSTRAINTS.md)
 - 迭代流程变化：更新 [迭代流程](docs/ITERATION_WORKFLOW.md)
+- 开发环境变化：更新 [开发环境](docs/DEVELOPMENT_SETUP.md)
+- 当前任务验收标准变化：更新 [当前迭代](docs/CURRENT_ITERATION.md)
+- 关键技术选择变化：更新 [架构决策记录](docs/DECISIONS.md)
+- 数据源变化：更新 [数据源计划](docs/DATA_SOURCE_PLAN.md)
+- API 响应格式变化：更新 [API 约定](docs/API_CONVENTIONS.md)
 - 完成了可见变更：更新 [更新日志](docs/CHANGELOG.md)
 
 文档是项目方向和进度的准绳，后续迭代不能脱离这些约束随意扩散。
