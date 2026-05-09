@@ -2,6 +2,10 @@
 
 ## 2026-05-09
 
+- 新增上市时间过滤模块，支持从股票列表中过滤上市不足一年的股票，基于 stocks 表的 list_date 字段判断，支持配置上市月数阈值。
+- 新增 filter_stocks_by_listing_date 返回满足上市时间要求的股票列表。
+- 新增 _subtract_months 辅助函数计算截止日期，_days_in_month 返回月份天数。
+- 新增上市时间过滤测试，覆盖新建上市、刚好满一年、超过一年、自定义月数阈值和缺失 list_date 的情况。
 - 新增 ST 过滤模块，支持从股票列表中过滤 ST 和 *ST 股票，基于 stocks 表的 is_st 字段判断。
 - 新增 filter_stocks 返回非 ST 股票列表，只考虑 is_st 字段。
 - 新增 ST 过滤测试，覆盖 ST 和 *ST 股票过滤、非 ST 股票保留、全部为 ST 的情况和基于 is_st 字段判断。

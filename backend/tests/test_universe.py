@@ -1,7 +1,8 @@
 from app.data import (
     IndexConstituentRecord,
     StockBasicRecord,
-    filter_st_stocks,
+    filter_stocks,
+    filter_stocks_by_listing_date,
     get_universe_stock_codes,
     load_index_constituents,
     load_stock_basics,
@@ -36,7 +37,7 @@ def test_get_universe_stock_codes_returns_active_stocks_from_index(tmp_path) -> 
     assert set(result) == {"600000", "000001", "600519"}
 
 
-def test_filter_st_stocks_removes_st_and_star_st(tmp_path) -> None:
+def test_filter_stocks_removes_st_and_star_st(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'quant.db'}"
 
     with open_sqlite_connection(database_url) as connection:
@@ -51,12 +52,12 @@ def test_filter_st_stocks_removes_st_and_star_st(tmp_path) -> None:
             ],
         )
 
-        result = filter_st_stocks(connection, ["600000", "000001", "600519", "000002"])
+        result = filter_stocks(connection, ["600000", "000001", "600519", "000002"])
 
     assert set(result) == {"600000", "000002"}
 
 
-def test_filter_st_stocks_keeps_all_non_st_stocks(tmp_path) -> None:
+def test_filter_stocks_keeps_all_non_st_stocks(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'quant.db'}"
 
     with open_sqlite_connection(database_url) as connection:
@@ -70,12 +71,12 @@ def test_filter_st_stocks_keeps_all_non_st_stocks(tmp_path) -> None:
             ],
         )
 
-        result = filter_st_stocks(connection, ["600000", "000001", "600519"])
+        result = filter_stocks(connection, ["600000", "000001", "600519"])
 
     assert set(result) == {"600000", "000001", "600519"}
 
 
-def test_filter_st_stocks_returns_empty_when_all_are_st(tmp_path) -> None:
+def test_filter_stocks_returns_empty_when_all_are_st(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'quant.db'}"
 
     with open_sqlite_connection(database_url) as connection:
@@ -88,12 +89,12 @@ def test_filter_st_stocks_returns_empty_when_all_are_st(tmp_path) -> None:
             ],
         )
 
-        result = filter_st_stocks(connection, ["000001", "600519"])
+        result = filter_stocks(connection, ["000001", "600519"])
 
     assert result == []
 
 
-def test_filter_st_stocks_filters_by_is_st_field(tmp_path) -> None:
+def test_filter_stocks_filters_by_is_st_field(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'quant.db'}"
 
     with open_sqlite_connection(database_url) as connection:
@@ -106,12 +107,12 @@ def test_filter_st_stocks_filters_by_is_st_field(tmp_path) -> None:
             ],
         )
 
-        result = filter_st_stocks(connection, ["600000", "000001"])
+        result = filter_stocks(connection, ["600000", "000001"])
 
     assert result == ["600000"]
 
 
-def test_filter_st_stocks_only_filters_by_is_st_field(tmp_path) -> None:
+def test_filter_stocks_only_filters_by_is_st_field(tmp_path) -> None:
     database_url = f"sqlite:///{tmp_path / 'quant.db'}"
 
     with open_sqlite_connection(database_url) as connection:
@@ -124,9 +125,118 @@ def test_filter_st_stocks_only_filters_by_is_st_field(tmp_path) -> None:
             ],
         )
 
-        result = filter_st_stocks(connection, ["600000", "000001"])
+        result = filter_stocks(connection, ["600000", "000001"])
 
     assert result == ["600000"]
+
+
+def test_filter_stocks_by_listing_date_removes_newly_listed(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_stock_basics(
+            connection,
+            [
+                StockBasicRecord("600000", "浦发银行", "SH", "2000-01-01", "银行", False, "active"),
+                StockBasicRecord("000001", "平安银行", "SZ", "2000-01-01", "银行", False, "active"),
+                StockBasicRecord("600519", "贵州茅台", "SH", "2001-08-27", "白酒", False, "active"),
+                StockBasicRecord("600527", "招商银行", "SH", "2025-10-01", "银行", False, "active"),
+            ],
+        )
+
+        result = filter_stocks_by_listing_date(
+            connection, ["600000", "000001", "600519", "600527"], "2026-05-07"
+        )
+
+    assert set(result) == {"600000", "000001", "600519"}
+
+
+def test_filter_stocks_by_listing_date_removes_exactly_one_year_old(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_stock_basics(
+            connection,
+            [
+                StockBasicRecord("600000", "浦发银行", "SH", "2000-01-01", "银行", False, "active"),
+                StockBasicRecord("000001", "平安银行", "SZ", "2000-01-01", "银行", False, "active"),
+                StockBasicRecord("600519", "贵州茅台", "SH", "2001-08-27", "白酒", False, "active"),
+                StockBasicRecord("600527", "招商银行", "SH", "2025-05-07", "银行", False, "active"),
+            ],
+        )
+
+        result = filter_stocks_by_listing_date(
+            connection, ["600000", "000001", "600519", "600527"], "2026-05-07"
+        )
+
+    assert set(result) == {"600000", "000001", "600519"}
+
+
+def test_filter_stocks_by_listing_date_keeps_over_one_year_old(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_stock_basics(
+            connection,
+            [
+                StockBasicRecord("600000", "浦发银行", "SH", "2000-01-01", "银行", False, "active"),
+                StockBasicRecord("000001", "平安银行", "SZ", "2000-01-01", "银行", False, "active"),
+                StockBasicRecord("600519", "贵州茅台", "SH", "2001-08-27", "白酒", False, "active"),
+                StockBasicRecord("600527", "招商银行", "SH", "2025-04-07", "银行", False, "active"),
+            ],
+        )
+
+        result = filter_stocks_by_listing_date(
+            connection, ["600000", "000001", "600519", "600527"], "2026-05-07"
+        )
+
+    assert set(result) == {"600000", "000001", "600519", "600527"}
+
+
+def test_filter_stocks_by_listing_date_supports_custom_months(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_stock_basics(
+            connection,
+            [
+                StockBasicRecord("600000", "浦发银行", "SH", "2000-01-01", "银行", False, "active"),
+                StockBasicRecord("000001", "平安银行", "SZ", "2000-01-01", "银行", False, "active"),
+                StockBasicRecord("600519", "贵州茅台", "SH", "2001-08-27", "白酒", False, "active"),
+                StockBasicRecord("600527", "招商银行", "SH", "2025-10-01", "银行", False, "active"),
+            ],
+        )
+
+        result = filter_stocks_by_listing_date(
+            connection, ["600000", "000001", "600519", "600527"], "2026-05-07", months=18
+        )
+
+    assert set(result) == {"600000", "000001", "600519", "600527"}
+
+
+def test_filter_stocks_by_listing_date_handles_missing_list_date(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_stock_basics(
+            connection,
+            [
+                StockBasicRecord("600000", "浦发银行", "SH", "2000-01-01", "银行", False, "active"),
+                StockBasicRecord("000001", "平安银行", "SZ", "2000-01-01", "银行", False, "active"),
+                StockBasicRecord("600519", "贵州茅台", "SH", "2001-08-27", "白酒", False, "active"),
+            ],
+        )
+
+        result = filter_stocks_by_listing_date(
+            connection, ["600000", "000001", "600519"], "2026-05-07"
+        )
+
+    assert set(result) == {"600000", "000001", "600519"}
 
 
 def test_get_universe_stock_codes_filters_out_st_stocks(tmp_path) -> None:
