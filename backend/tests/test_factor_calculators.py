@@ -1,10 +1,13 @@
 from app.data import (
+    DailyPriceRecord,
     FinancialRecord,
     StockBasicRecord,
     ValuationRecord,
     calculate_growth_factor,
+    calculate_momentum_factor,
     calculate_quality_factor,
     calculate_valuation_factor,
+    load_daily_prices,
     load_financial_metrics,
     load_stock_basics,
     load_valuations,
@@ -499,9 +502,7 @@ def test_growth_factor_scores_higher_growth_higher(tmp_path) -> None:
             ],
         )
 
-        scores = calculate_growth_factor(
-            connection, ["600000", "000001", "600519"], "2026-05-07"
-        )
+        scores = calculate_growth_factor(connection, ["600000", "000001", "600519"], "2026-05-07")
 
     assert scores["600519"] > scores["000001"] > scores["600000"]
 
@@ -572,4 +573,119 @@ def test_growth_factor_uses_aligned_financial_data(tmp_path) -> None:
 
         scores = calculate_growth_factor(connection, ["600000"], "2026-05-07")
 
+    assert scores["600000"] == 0.5
+
+
+def test_momentum_factor_scores_higher_return_higher(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_daily_prices(
+            connection,
+            [
+                DailyPriceRecord("600000", "2026-01-07", 0, 0, 0, 10.0, 100, 1000, 10.0),
+                DailyPriceRecord("600000", "2026-03-08", 0, 0, 0, 12.0, 100, 1200, 12.0),
+                DailyPriceRecord("600000", "2026-05-07", 0, 0, 0, 14.0, 100, 1400, 14.0),
+                DailyPriceRecord("000001", "2026-01-07", 0, 0, 0, 10.0, 100, 1000, 10.0),
+                DailyPriceRecord("000001", "2026-03-08", 0, 0, 0, 11.0, 100, 1100, 11.0),
+                DailyPriceRecord("000001", "2026-05-07", 0, 0, 0, 12.0, 100, 1200, 12.0),
+                DailyPriceRecord("600519", "2026-01-07", 0, 0, 0, 10.0, 100, 1000, 10.0),
+                DailyPriceRecord("600519", "2026-03-08", 0, 0, 0, 10.5, 100, 1050, 10.5),
+                DailyPriceRecord("600519", "2026-05-07", 0, 0, 0, 11.0, 100, 1100, 11.0),
+            ],
+        )
+
+        scores = calculate_momentum_factor(connection, ["600000", "000001", "600519"], "2026-05-07")
+
+    assert scores["600000"] > scores["000001"] > scores["600519"]
+
+
+def test_momentum_factor_supports_weight_configuration(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_daily_prices(
+            connection,
+            [
+                DailyPriceRecord("600000", "2026-01-07", 0, 0, 0, 10.0, 100, 1000, 10.0),
+                DailyPriceRecord("600000", "2026-03-08", 0, 0, 0, 20.0, 100, 2000, 20.0),
+                DailyPriceRecord("600000", "2026-05-07", 0, 0, 0, 22.0, 100, 2200, 22.0),
+                DailyPriceRecord("000001", "2026-01-07", 0, 0, 0, 10.0, 100, 1000, 10.0),
+                DailyPriceRecord("000001", "2026-03-08", 0, 0, 0, 11.0, 100, 1100, 11.0),
+                DailyPriceRecord("000001", "2026-05-07", 0, 0, 0, 20.0, 100, 2000, 20.0),
+            ],
+        )
+
+        short_only_scores = calculate_momentum_factor(
+            connection,
+            ["600000", "000001"],
+            "2026-05-07",
+            momentum_60_weight=1.0,
+            momentum_120_weight=0.0,
+        )
+        long_only_scores = calculate_momentum_factor(
+            connection,
+            ["600000", "000001"],
+            "2026-05-07",
+            momentum_60_weight=0.0,
+            momentum_120_weight=1.0,
+        )
+
+    assert short_only_scores["000001"] > short_only_scores["600000"]
+    assert long_only_scores["600000"] > long_only_scores["000001"]
+
+
+def test_momentum_factor_uses_adjusted_close_before_close_price(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_daily_prices(
+            connection,
+            [
+                DailyPriceRecord("600000", "2026-03-08", 0, 0, 0, 10.0, 100, 1000, 100.0),
+                DailyPriceRecord("600000", "2026-05-07", 0, 0, 0, 20.0, 100, 2000, 120.0),
+                DailyPriceRecord("000001", "2026-03-08", 0, 0, 0, 10.0, 100, 1000, None),
+                DailyPriceRecord("000001", "2026-05-07", 0, 0, 0, 20.0, 100, 2000, None),
+            ],
+        )
+
+        scores = calculate_momentum_factor(
+            connection,
+            ["600000", "000001"],
+            "2026-05-07",
+            momentum_60_weight=1.0,
+            momentum_120_weight=0.0,
+        )
+
+    assert scores["000001"] > scores["600000"]
+
+
+def test_momentum_factor_handles_missing_price_history(tmp_path) -> None:
+    database_url = f"sqlite:///{tmp_path / 'quant.db'}"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        load_daily_prices(
+            connection,
+            [
+                DailyPriceRecord("600000", "2026-05-07", 0, 0, 0, 20.0, 100, 2000, 20.0),
+                DailyPriceRecord("000001", "2026-03-08", 0, 0, 0, 10.0, 100, 1000, 10.0),
+                DailyPriceRecord("000001", "2026-05-07", 0, 0, 0, 20.0, 100, 2000, 20.0),
+                DailyPriceRecord("600519", "2026-03-08", 0, 0, 0, 10.0, 100, 1000, 10.0),
+                DailyPriceRecord("600519", "2026-05-07", 0, 0, 0, 11.0, 100, 1100, 11.0),
+            ],
+        )
+
+        scores = calculate_momentum_factor(
+            connection,
+            ["600000", "000001", "600519"],
+            "2026-05-07",
+            momentum_60_weight=1.0,
+            momentum_120_weight=0.0,
+        )
+
+    assert scores["000001"] > scores["600000"] > scores["600519"]
     assert scores["600000"] == 0.5

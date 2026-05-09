@@ -1,12 +1,69 @@
 from __future__ import annotations
 
 import sqlite3
+from datetime import date, timedelta
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
 from app.data.factors import get_aligned_financial
+
+
+def calculate_momentum_factor(
+    connection: sqlite3.Connection,
+    stock_codes: list[str],
+    score_date: str,
+    momentum_60_weight: float = 0.5,
+    momentum_120_weight: float = 0.5,
+) -> dict[str, float]:
+    """计算动量因子得分
+
+    动量因子包含：
+    - 60 日涨跌幅: 近 60 日涨幅越高越好
+    - 120 日涨跌幅: 近 120 日涨幅越高越好
+
+    价格优先使用 adjusted_close，缺失时使用 close_price。
+    """
+    valid_stocks: dict[str, dict[str, float | None]] = {}
+    for stock_code in stock_codes:
+        current_price = _get_price_on_or_before(connection, stock_code, score_date)
+        price_60 = _get_price_on_or_before(
+            connection,
+            stock_code,
+            _subtract_days(score_date, 60),
+        )
+        price_120 = _get_price_on_or_before(
+            connection,
+            stock_code,
+            _subtract_days(score_date, 120),
+        )
+        if current_price is not None:
+            valid_stocks[stock_code] = {
+                "momentum_60": _calculate_return(current_price, price_60),
+                "momentum_120": _calculate_return(current_price, price_120),
+            }
+
+    if not valid_stocks:
+        return {}
+
+    momentum_60_scores = _rank_values(
+        {code: data["momentum_60"] for code, data in valid_stocks.items()},
+        reverse=False,
+    )
+    momentum_120_scores = _rank_values(
+        {code: data["momentum_120"] for code, data in valid_stocks.items()},
+        reverse=False,
+    )
+
+    scores: dict[str, float] = {}
+    for stock_code in valid_stocks:
+        scores[stock_code] = (
+            momentum_60_scores.get(stock_code, 0.5) * momentum_60_weight
+            + momentum_120_scores.get(stock_code, 0.5) * momentum_120_weight
+        )
+
+    return scores
 
 
 def calculate_growth_factor(
@@ -119,6 +176,39 @@ def _calculate_cash_flow_quality(financial: sqlite3.Row) -> float | None:
     ):
         return None
     return financial["operating_cash_flow"] / financial["net_profit"]
+
+
+def _get_price_on_or_before(
+    connection: sqlite3.Connection,
+    stock_code: str,
+    target_date: str,
+) -> float | None:
+    row = connection.execute(
+        """
+        select close_price, adjusted_close
+        from daily_prices
+        where stock_code = ?
+          and trade_date <= ?
+        order by trade_date desc
+        limit 1
+        """,
+        (stock_code, target_date),
+    ).fetchone()
+    if row is None:
+        return None
+    if row["adjusted_close"] is not None:
+        return row["adjusted_close"]
+    return row["close_price"]
+
+
+def _calculate_return(current_price: float, previous_price: float | None) -> float | None:
+    if previous_price is None or previous_price <= 0:
+        return None
+    return current_price / previous_price - 1
+
+
+def _subtract_days(value: str, days: int) -> str:
+    return (date.fromisoformat(value) - timedelta(days=days)).isoformat()
 
 
 def calculate_valuation_factor(
