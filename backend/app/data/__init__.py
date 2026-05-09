@@ -15,6 +15,10 @@ from app.data.index_constituents import (
     get_latest_index_constituents,
     load_index_constituents,
 )
+from app.data.status import (
+    get_data_status,
+    get_latest_date_by_type,
+)
 from app.data.stocks import (
     StockBasicRecord,
     get_active_stock_codes,
@@ -43,8 +47,10 @@ __all__ = [
     "ValuationRecord",
     "get_active_stock_codes",
     "get_daily_prices",
+    "get_data_status",
     "get_financial_metrics",
     "get_index_constituents",
+    "get_latest_date_by_type",
     "get_latest_index_constituents",
     "get_next_open_trade_date",
     "get_open_trade_dates",
