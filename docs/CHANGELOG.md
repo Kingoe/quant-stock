@@ -2,6 +2,11 @@
 
 ## 2026-05-09
 
+- 新增后端配置读取模块，支持从 TOML 文件读取应用、策略和交易成本配置。
+- 新增默认配置文件 `backend/config/default.toml`。
+- 新增配置模块测试，覆盖正常读取、因子权重校验和持仓数量校验。
+- 调整后端依赖配置，增加 uv dev dependency group，保证 `uv run pytest` 和 `uv run ruff` 可直接使用。
+- 新增 `.gitignore`，避免提交虚拟环境、缓存、本地数据和构建产物。
 - 新增后端依赖配置 `backend/pyproject.toml`，包含 FastAPI、uvicorn、pandas、numpy、pytest 和 ruff。
 - 配置后端 pytest 测试发现规则和 ruff 检查/格式化规则。
 - 创建后端基础目录结构：`backend/app` 和 `backend/tests`。

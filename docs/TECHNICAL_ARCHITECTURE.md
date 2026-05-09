@@ -55,6 +55,8 @@ quant-stock/
 
   backend/
     pyproject.toml
+    config/
+      default.toml
     app/
       main.py
       api/          # API 接口

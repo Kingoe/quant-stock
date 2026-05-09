@@ -1,0 +1,25 @@
+[app]
+name = "Quant Stock"
+environment = "local"
+timezone = "Asia/Shanghai"
+database_url = "sqlite:///data/quant.db"
+
+[strategy]
+universe = "CSI800"
+rebalance_frequency = "weekly"
+holding_count = 15
+single_stock_max_weight = 0.08
+industry_max_weight = 0.25
+cash_buffer = 0.05
+
+[strategy.factor_weights]
+valuation = 0.25
+quality = 0.25
+growth = 0.20
+momentum = 0.20
+risk_liquidity = 0.10
+
+[trading_cost]
+commission_rate = 0.0003
+stamp_duty_rate = 0.0005
+slippage_rate = 0.001
