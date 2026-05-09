@@ -61,7 +61,7 @@ quant-stock/
       main.py
       api/          # API 接口
       config/       # 配置读取
-      data/         # 数据源接入
+      data/         # 数据加载和数据源接入
       storage/      # SQLite 读写
       universe/     # 股票池过滤
       factors/      # 因子计算
@@ -129,6 +129,10 @@ quant-stock/
 - `financial_metrics`：财务数据和披露日期。
 - `strategy_runs`：策略运行记录。
 - `rebalance_recommendations`：调仓建议。
+
+当前已实现的数据加载能力：
+
+- 交易日历加载：写入 `trading_calendar` 表，维护上一/下一开市日，支持开市日期查询。
 
 ## 6. 股票池规则
 
