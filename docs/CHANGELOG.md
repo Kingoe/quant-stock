@@ -2,6 +2,16 @@
 
 ## 2026-05-10
 
+- 新增持仓和现金记账模块，支持投资组合状态管理。
+- 新增 Portfolio 数据结构，包含现金余额和股票持仓，验证非负约束。
+- 新增 Position 数据结构，包含股票代码、持股数、平均成本和市值。
+- 新增 PortfolioSnapshot 数据结构，包含日期、现金、持仓列表和总价值。
+- 新增 apply_trade 函数，应用交易到投资组合，更新现金和持仓。
+- 新增 calculate_position_value 和 calculate_portfolio_value 函数，计算持仓市值和组合总价值。
+- 新增 get_position_details 函数，获取持仓详情列表。
+- 新增 create_snapshot 函数，创建投资组合快照。
+- 新增 create_initial_portfolio 函数，创建初始投资组合。
+- 新增 17 项组合记账测试，覆盖买入、卖出、连续交易、价值计算、快照和参数校验。
 - 新增 A 股交易限制模块，支持按交易约束过滤订单。
 - 新增 TradingConstraints 数据结构，配置 T+1、涨停、跌停、停牌等限制。
 - 新增 TradingDayStatus 数据结构，表示交易日状态（涨停、跌停、停牌）。
