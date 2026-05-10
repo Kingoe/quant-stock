@@ -23,6 +23,7 @@ from app.data.factor_effectiveness import (
     calculate_information_coefficient,
     calculate_layer_returns,
 )
+from app.data.factor_neutralization import neutralize_scores_by_industry
 from app.data.factors import (
     get_aligned_daily_price,
     get_aligned_financial,
@@ -128,6 +129,7 @@ __all__ = [
     "load_stock_basics",
     "load_trading_calendar",
     "load_valuations",
+    "neutralize_scores_by_industry",
     "rank_factor_values",
     "winsorize_factor_values",
 ]
