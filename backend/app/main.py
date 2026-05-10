@@ -9,6 +9,7 @@ from app.data import (
     get_stock,
     get_universe_stock_codes,
 )
+from app.portfolio import generate_weekly_rebalance
 from app.storage import open_sqlite_connection
 
 app = FastAPI(title="Quant Stock Backend")
@@ -35,6 +36,17 @@ class UniverseStockItem(BaseModel):
     pb: float | None = None
     avg_amount: float | None = None
     is_suspended: bool = False
+
+
+class RebalanceRecommendationItem(BaseModel):
+    stock_code: str
+    stock_name: str | None
+    action: str
+    target_weight: float | None
+    total_score: float
+    rank: int | None
+    reason: str
+    risk_note: str | None
 
 
 @app.get("/api/health")
@@ -145,5 +157,49 @@ def get_universe(
                 request_id="local-dev",
                 generated_at=datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
                 pagination=PaginationMeta(page=page, page_size=page_size, total=total),
+            ).model_dump(),
+        }
+
+
+@app.get("/api/rebalance/latest")
+def get_latest_rebalance(
+    index_code: str = Query("000906", description="指数代码"),
+    score_date: str = Query(..., description="评分日期"),
+    database_url: str = Query(..., description="数据库 URL"),
+    limit: int = Query(15, ge=1, le=50, description="候选股数量"),
+    single_stock_max_weight: float = Query(0.08, gt=0, le=1, description="单票最大仓位"),
+    industry_max_weight: float = Query(0.3, gt=0, le=1, description="行业最大仓位"),
+) -> dict[str, Any]:
+    """获取最新调仓建议。"""
+    with open_sqlite_connection(database_url) as connection:
+        recommendations = generate_weekly_rebalance(
+            connection,
+            index_code,
+            score_date,
+            limit=limit,
+            single_stock_max_weight=single_stock_max_weight,
+            industry_max_weight=industry_max_weight,
+            current_positions=None,
+        )
+
+        items = [
+            RebalanceRecommendationItem(
+                stock_code=r.stock_code,
+                stock_name=r.stock_name,
+                action=r.action,
+                target_weight=r.target_weight,
+                total_score=r.total_score,
+                rank=r.rank,
+                reason=r.reason,
+                risk_note=r.risk_note,
+            )
+            for r in recommendations
+        ]
+
+        return {
+            "data": items,
+            "meta": Meta(
+                request_id="local-dev",
+                generated_at=datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
             ).model_dump(),
         }

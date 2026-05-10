@@ -11,6 +11,7 @@ from app.portfolio.candidates import (
     generate_rebalance_recommendations,
     select_top_candidates,
 )
+from app.portfolio.rebalance import generate_weekly_rebalance
 
 __all__ = [
     "CandidateStock",
@@ -24,4 +25,5 @@ __all__ = [
     "calculate_top_candidates",
     "generate_rebalance_recommendations",
     "select_top_candidates",
+    "generate_weekly_rebalance",
 ]
