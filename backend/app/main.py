@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 
 from app.data import (
@@ -15,8 +15,9 @@ from app.reports import (
     generate_rebalance_excel,
     generate_weekly_html_report,
 )
+from app.run_log import RunStatus, create_run_log, update_run_log_status
 from app.scheduler import scheduler
-from app.storage import open_sqlite_connection
+from app.storage import initialize_schema, open_sqlite_connection
 
 app = FastAPI(title="Quant Stock Backend")
 
@@ -65,6 +66,14 @@ class RebalanceRecommendationItem(BaseModel):
     rank: int | None
     reason: str
     risk_note: str | None
+
+
+class RunWeeklyStrategyResult(BaseModel):
+    log_id: int | None
+    status: str
+    recommendations_count: int
+    action_counts: dict[str, int]
+    error_message: str | None = None
 
 
 @app.get("/api/health")
@@ -312,3 +321,72 @@ def get_rebalance_csv(
             "Content-Disposition": f"attachment; filename=rebalance_{score_date}.csv",
         },
     )
+
+
+@app.post("/api/jobs/run-weekly-strategy")
+def run_weekly_strategy(
+    index_code: str = Query("000906", description="指数代码"),
+    score_date: str = Query(..., description="评分日期"),
+    database_url: str = Query(..., description="数据库 URL"),
+    limit: int = Query(15, ge=1, le=50, description="候选股数量"),
+    single_stock_max_weight: float = Query(0.08, gt=0, le=1, description="单票最大仓位"),
+    industry_max_weight: float = Query(0.3, gt=0, le=1, description="行业最大仓位"),
+) -> dict[str, Any]:
+    """手动运行本周策略。"""
+    error_message: str | None = None
+    data: RunWeeklyStrategyResult | None = None
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        log = create_run_log(connection, "weekly_strategy")
+        if log.id is None:
+            raise HTTPException(status_code=500, detail="failed to create run log")
+
+        update_run_log_status(connection, log.id, RunStatus.RUNNING)
+
+        try:
+            recommendations = generate_weekly_rebalance(
+                connection,
+                index_code,
+                score_date,
+                limit=limit,
+                single_stock_max_weight=single_stock_max_weight,
+                industry_max_weight=industry_max_weight,
+                current_positions=None,
+            )
+        except Exception as exc:
+            error_message = str(exc)
+            update_run_log_status(
+                connection,
+                log.id,
+                RunStatus.FAILED,
+                error_message=error_message,
+            )
+        else:
+            action_counts = {"buy": 0, "hold": 0, "sell": 0, "watch": 0}
+            for item in recommendations:
+                if item.action in action_counts:
+                    action_counts[item.action] += 1
+
+            result = {
+                "recommendations_count": len(recommendations),
+                "action_counts": action_counts,
+            }
+            update_run_log_status(connection, log.id, RunStatus.SUCCESS, result=result)
+            data = RunWeeklyStrategyResult(
+                log_id=log.id,
+                status="success",
+                recommendations_count=len(recommendations),
+                action_counts=action_counts,
+            )
+
+    if error_message is not None:
+        raise HTTPException(status_code=500, detail=error_message)
+
+    return {
+        "data": data.model_dump() if data else None,
+        "meta": Meta(
+            request_id="local-dev",
+            generated_at=datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
+        ).model_dump(),
+    }

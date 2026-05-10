@@ -56,6 +56,28 @@ interface DrawdownData {
   drawdown: number
 }
 
+interface RunWeeklyStrategyParams {
+  index_code?: string
+  score_date?: string
+  database_url?: string
+  limit?: number
+  single_stock_max_weight?: number
+  industry_max_weight?: number
+}
+
+interface RunWeeklyStrategyData {
+  log_id: number | null
+  status: 'success' | 'failed'
+  recommendations_count: number
+  action_counts: {
+    buy: number
+    hold: number
+    sell: number
+    watch: number
+  }
+  error_message?: string | null
+}
+
 export const getDataStatus = async (): Promise<{ data: DataStatus; meta: ApiMeta }> => {
   try {
     const response = await axios.get(`${API_BASE_URL}/data/status`)
@@ -152,6 +174,43 @@ export const getDrawdownCurve = async (): Promise<{ data: DrawdownData[]; meta: 
     console.error('Failed to fetch drawdown curve:', error)
     return {
       data: [],
+      meta: {},
+    }
+  }
+}
+
+export const runWeeklyStrategy = async (
+  params: RunWeeklyStrategyParams = {},
+): Promise<{ data: RunWeeklyStrategyData; meta: ApiMeta }> => {
+  const scoreDate = params.score_date ?? new Date().toISOString().slice(0, 10)
+
+  try {
+    const response = await axios.post(`${API_BASE_URL}/jobs/run-weekly-strategy`, null, {
+      params: {
+        index_code: params.index_code ?? '000906',
+        score_date: scoreDate,
+        database_url: params.database_url ?? 'sqlite:///../data/quant.db',
+        limit: params.limit ?? 15,
+        single_stock_max_weight: params.single_stock_max_weight ?? 0.08,
+        industry_max_weight: params.industry_max_weight ?? 0.3,
+      },
+    })
+    return response.data
+  } catch (error) {
+    console.error('Failed to run weekly strategy:', error)
+    return {
+      data: {
+        log_id: null,
+        status: 'failed',
+        recommendations_count: 0,
+        action_counts: {
+          buy: 0,
+          hold: 0,
+          sell: 0,
+          watch: 0,
+        },
+        error_message: '运行失败，请检查数据和后端服务',
+      },
       meta: {},
     }
   }

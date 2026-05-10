@@ -265,6 +265,8 @@ POST /api/jobs/run-weekly-strategy
 GET  /api/exports/latest
 ```
 
+`POST /api/jobs/run-weekly-strategy` 用于本地手动触发本周策略，不连接券商，不产生真实订单。接口会记录 `weekly_strategy` 运行日志，成功时返回调仓建议数量和 action 统计，失败时记录错误信息并返回 500。
+
 ## 11. 前端页面
 
 ### 总览页
