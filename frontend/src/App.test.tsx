@@ -18,4 +18,14 @@ describe('App workspace navigation', () => {
     expect(screen.getByRole('heading', { name: /买入/ })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /卖出/ })).toBeInTheDocument()
   })
+
+  it('switches to the experiments page', async () => {
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: '实验记录' }))
+
+    expect(screen.getByRole('heading', { name: '实验记录' })).toBeInTheDocument()
+  })
 })

@@ -5,9 +5,10 @@ import Factors from './pages/Factors'
 import Backtest from './pages/Backtest'
 import Config from './pages/Config'
 import Status from './pages/Status'
+import Experiments from './pages/Experiments'
 import './index.css'
 
-type Page = 'overview' | 'rebalance' | 'factors' | 'backtest' | 'config' | 'status'
+type Page = 'overview' | 'rebalance' | 'factors' | 'backtest' | 'config' | 'status' | 'experiments'
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('overview')
@@ -26,6 +27,8 @@ function App() {
         return <Config />
       case 'status':
         return <Status />
+      case 'experiments':
+        return <Experiments />
       default:
         return <Overview />
     }
@@ -38,6 +41,7 @@ function App() {
     { key: 'backtest' as Page, label: '回测分析' },
     { key: 'config' as Page, label: '策略配置' },
     { key: 'status' as Page, label: '数据状态' },
+    { key: 'experiments' as Page, label: '实验记录' },
   ]
 
   return (

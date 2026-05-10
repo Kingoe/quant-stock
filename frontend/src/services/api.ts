@@ -98,6 +98,16 @@ interface SimulationSummaryData {
   }
 }
 
+export interface ParameterExperimentData {
+  experiment_id: number
+  name: string
+  description: string | null
+  parameters: Record<string, unknown>
+  metrics: Record<string, unknown>
+  notes: string | null
+  created_at: string
+}
+
 export const getDataStatus = async (): Promise<{ data: DataStatus; meta: ApiMeta }> => {
   try {
     const response = await axios.get(`${API_BASE_URL}/data/status`)
@@ -270,6 +280,27 @@ export const getSimulationSummary = async (): Promise<{
         },
       },
       meta: {},
+    }
+  }
+}
+
+export const getExperiments = async (): Promise<{
+  data: ParameterExperimentData[]
+  meta: ApiMeta
+}> => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/experiments`, {
+      params: {
+        database_url: 'sqlite:///../data/quant.db',
+        limit: 20,
+      },
+    })
+    return response.data
+  } catch (error) {
+    console.error('Failed to fetch experiments:', error)
+    return {
+      data: [],
+      meta: { fallback: true },
     }
   }
 }
