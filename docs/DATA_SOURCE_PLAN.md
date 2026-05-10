@@ -4,7 +4,12 @@
 
 ## 1. 第一版数据源
 
-第一版优先使用 akshare。
+第一版采用“双入口”数据源：
+
+- `LocalCsvProvider`：本地 CSV 数据源，用于稳定测试、回放和手工导入。
+- `AkShareProvider`：AkShare 在线数据源，用于个人研究场景下补充免费数据。
+
+业务逻辑只依赖统一 `DataProvider` 接口，不直接调用 AkShare。
 
 原因：
 
@@ -133,12 +138,27 @@
 
 ```text
 backend/app/data/
-  provider.py          # 抽象接口
-  akshare_provider.py  # akshare 实现
-  schemas.py           # 数据结构
+  providers.py         # 统一 DataProvider、LocalCsvProvider、AkShareProvider
+  *.py                 # 内部数据结构和数据库加载器
 ```
 
 这样后续可以替换为 tushare、聚宽、米筐或付费数据源。
+
+当前实现状态：
+
+- `LocalCsvProvider` 已支持股票基础信息、交易日历、指数成分、日行情、估值和财务数据的 CSV 字段映射。
+- `AkShareProvider` 已支持股票基础信息和日行情基础映射。
+- AkShare 的指数成分、估值、财务、交易日历映射暂不直接标记完成，后续需要逐项确认字段稳定性。
+- AkShare 单元测试必须使用 mock，不访问真实网络。
+
+CSV 文件约定：
+
+- `stocks.csv`
+- `trading_calendar.csv`
+- `index_constituents.csv`
+- `daily_prices.csv`
+- `valuations.csv`
+- `financial_metrics.csv`
 
 ## 5. 预研清单
 

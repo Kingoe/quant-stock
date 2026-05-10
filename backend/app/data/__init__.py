@@ -32,6 +32,12 @@ from app.data.index_constituents import (
     get_latest_index_constituents,
     load_index_constituents,
 )
+from app.data.providers import (
+    AkShareProvider,
+    DataProvider,
+    DataProviderError,
+    LocalCsvProvider,
+)
 from app.data.status import (
     get_data_status,
     get_latest_date_by_type,
@@ -67,6 +73,10 @@ __all__ = [
     "DailyPriceRecord",
     "FinancialRecord",
     "IndexConstituentRecord",
+    "AkShareProvider",
+    "DataProvider",
+    "DataProviderError",
+    "LocalCsvProvider",
     "StockBasicRecord",
     "TradingCalendarRecord",
     "ValuationRecord",

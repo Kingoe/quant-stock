@@ -38,7 +38,7 @@ Quant Stock 是一个个人 A 股多因子选股辅助系统。
 
 ### 数据源
 
-- 第一版：akshare
+- 第一版：LocalCsvProvider + AkShareProvider
 - 后续可选：tushare、聚宽、米筐、付费数据源、券商数据
 
 ## 3. 目录结构
@@ -94,6 +94,7 @@ quant-stock/
 
 ```text
 数据源
+  -> DataProvider 统一适配
   -> SQLite 本地存储
   -> 股票池过滤
   -> 因子计算
@@ -136,6 +137,7 @@ quant-stock/
 - 股票基础信息加载：写入 `stocks` 表，支持更新和 active 非 ST 股票代码查询。
 - 指数成分加载：写入 `index_constituents` 表，支持权重更新、按日期查询和最新可用成分查询。
 - 日行情加载：写入 `daily_prices` 表，支持行情更新、按股票区间查询和按交易日查询。
+- 数据源适配：`DataProvider` 定义统一数据读取接口，`LocalCsvProvider` 支持本地 CSV，`AkShareProvider` 当前支持股票基础信息和日行情基础映射。
 
 当前已实现的因子计算能力：
 
