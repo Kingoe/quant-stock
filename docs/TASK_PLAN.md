@@ -99,7 +99,7 @@
 | ID | 任务 | 状态 | 备注 |
 | --- | --- | --- | --- |
 | M6-1 | 实现周频调仓调度 | Done | 收盘后生成信号，下个交易日执行，已实现 generate_weekly_rebalance_dates 和 get_next_trade_date_after，覆盖 Friday 选择、非交易日过滤、空数据处理、排序和下一个交易日查询 |
-| M6-2 | 实现订单生成 | Not Started | 处理目标仓位和 100 股整数手 |
+| M6-2 | 实现订单生成 | Done | 处理目标仓位和 100 股整数手，已实现 generate_orders 函数，支持买入、卖出、调仓场景，股数按 100 股取整，差异小于 50 股时不交易，按股票代码排序 |
 | M6-3 | 实现交易成本 | Not Started | 佣金、印花税、滑点 |
 | M6-4 | 实现 A 股交易限制 | Not Started | T+1、涨跌停、停牌 |
 | M6-5 | 实现持仓和现金记账 | Not Started | 组合流水 |
