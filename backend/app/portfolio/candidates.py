@@ -96,3 +96,34 @@ def calculate_target_positions(
         candidates,
         single_stock_max_weight=single_stock_max_weight,
     )
+
+
+def apply_industry_weight_limit(
+    positions: list[TargetPosition],
+    industries: Mapping[str, str | None],
+    *,
+    industry_max_weight: float,
+) -> list[TargetPosition]:
+    if industry_max_weight <= 0:
+        raise ValueError("industry_max_weight must be greater than 0")
+    if industry_max_weight > 1:
+        raise ValueError("industry_max_weight must be less than or equal to 1")
+
+    used_by_industry: dict[str, float] = {}
+    capped_positions: list[TargetPosition] = []
+    for position in positions:
+        industry = industries.get(position.stock_code) or "未知"
+        used_weight = used_by_industry.get(industry, 0.0)
+        remaining_weight = max(industry_max_weight - used_weight, 0.0)
+        target_weight = min(position.target_weight, remaining_weight)
+        used_by_industry[industry] = used_weight + target_weight
+        capped_positions.append(
+            TargetPosition(
+                stock_code=position.stock_code,
+                total_score=position.total_score,
+                rank=position.rank,
+                target_weight=target_weight,
+            )
+        )
+
+    return capped_positions

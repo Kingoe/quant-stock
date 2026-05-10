@@ -11,6 +11,7 @@ from app.data import (
     load_valuations,
 )
 from app.portfolio import (
+    apply_industry_weight_limit,
     apply_single_stock_weight_limit,
     calculate_target_positions,
     calculate_top_candidates,
@@ -195,3 +196,63 @@ def test_calculate_target_positions_selects_candidates_and_applies_single_stock_
 
     assert [position.stock_code for position in positions] == ["600000", "000001"]
     assert [position.target_weight for position in positions] == [0.4, 0.4]
+
+
+def test_apply_industry_weight_limit_caps_industry_total_by_rank() -> None:
+    positions = calculate_target_positions(
+        ["600000", "000001", "600519"],
+        {
+            "600000": 0.9,
+            "000001": 0.8,
+            "600519": 0.7,
+        },
+        limit=3,
+        single_stock_max_weight=0.2,
+    )
+
+    capped_positions = apply_industry_weight_limit(
+        positions,
+        {"600000": "银行", "000001": "银行", "600519": "白酒"},
+        industry_max_weight=0.3,
+    )
+
+    assert [position.stock_code for position in capped_positions] == ["600000", "000001", "600519"]
+    assert [position.target_weight for position in capped_positions] == pytest.approx(
+        [0.2, 0.1, 0.2]
+    )
+
+
+def test_apply_industry_weight_limit_keeps_industry_below_cap() -> None:
+    positions = calculate_target_positions(
+        ["600000", "000001", "600519"],
+        {
+            "600000": 0.9,
+            "000001": 0.8,
+            "600519": 0.7,
+        },
+        limit=3,
+        single_stock_max_weight=0.1,
+    )
+
+    capped_positions = apply_industry_weight_limit(
+        positions,
+        {"600000": "银行", "000001": "银行", "600519": "白酒"},
+        industry_max_weight=0.3,
+    )
+
+    assert [position.target_weight for position in capped_positions] == [0.1, 0.1, 0.1]
+
+
+def test_apply_industry_weight_limit_rejects_invalid_cap() -> None:
+    positions = calculate_target_positions(
+        ["600000"],
+        {"600000": 0.9},
+        limit=1,
+        single_stock_max_weight=0.2,
+    )
+
+    with pytest.raises(ValueError, match="industry_max_weight must be greater than 0"):
+        apply_industry_weight_limit(positions, {"600000": "银行"}, industry_max_weight=0)
+
+    with pytest.raises(ValueError, match="industry_max_weight must be less than or equal to 1"):
+        apply_industry_weight_limit(positions, {"600000": "银行"}, industry_max_weight=1.2)

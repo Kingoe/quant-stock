@@ -1,6 +1,7 @@
 from app.portfolio.candidates import (
     CandidateStock,
     TargetPosition,
+    apply_industry_weight_limit,
     apply_single_stock_weight_limit,
     calculate_target_positions,
     calculate_top_candidates,
@@ -10,6 +11,7 @@ from app.portfolio.candidates import (
 __all__ = [
     "CandidateStock",
     "TargetPosition",
+    "apply_industry_weight_limit",
     "apply_single_stock_weight_limit",
     "calculate_target_positions",
     "calculate_top_candidates",
