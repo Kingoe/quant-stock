@@ -16,6 +16,13 @@ from app.data.factor_calculators import (
     rank_factor_values,
     winsorize_factor_values,
 )
+from app.data.factor_effectiveness import (
+    FactorIcResult,
+    LayerReturnResult,
+    calculate_forward_returns,
+    calculate_information_coefficient,
+    calculate_layer_returns,
+)
 from app.data.factors import (
     get_aligned_daily_price,
     get_aligned_financial,
@@ -71,8 +78,10 @@ from app.data.valuation import (
 
 __all__ = [
     "DailyPriceRecord",
+    "FactorIcResult",
     "FinancialRecord",
     "IndexConstituentRecord",
+    "LayerReturnResult",
     "AkShareProvider",
     "DataProvider",
     "DataProviderError",
@@ -80,7 +89,10 @@ __all__ = [
     "StockBasicRecord",
     "TradingCalendarRecord",
     "ValuationRecord",
+    "calculate_forward_returns",
     "calculate_growth_factor",
+    "calculate_information_coefficient",
+    "calculate_layer_returns",
     "calculate_liquidity_factor",
     "calculate_momentum_factor",
     "calculate_quality_factor",
