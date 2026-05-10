@@ -10,7 +10,12 @@ from app.data import (
     load_stock_basics,
     load_valuations,
 )
-from app.portfolio import calculate_top_candidates, select_top_candidates
+from app.portfolio import (
+    apply_single_stock_weight_limit,
+    calculate_target_positions,
+    calculate_top_candidates,
+    select_top_candidates,
+)
 from app.storage import initialize_schema, open_sqlite_connection
 from tests.test_factor_calculators import _build_amount_records
 
@@ -127,3 +132,66 @@ def test_calculate_top_candidates_uses_total_factor_scores(tmp_path) -> None:
 
     assert [candidate.stock_code for candidate in candidates] == ["600000", "000001"]
     assert [candidate.rank for candidate in candidates] == [1, 2]
+
+
+def test_apply_single_stock_weight_limit_caps_equal_weight_positions() -> None:
+    candidates = select_top_candidates(
+        ["600000", "000001", "600519"],
+        {
+            "600000": 0.9,
+            "000001": 0.8,
+            "600519": 0.7,
+        },
+        limit=3,
+    )
+
+    positions = apply_single_stock_weight_limit(candidates, single_stock_max_weight=0.08)
+
+    assert [position.stock_code for position in positions] == ["600000", "000001", "600519"]
+    assert [position.rank for position in positions] == [1, 2, 3]
+    assert all(position.target_weight == 0.08 for position in positions)
+    assert positions[0].total_score == 0.9
+
+
+def test_apply_single_stock_weight_limit_keeps_equal_weight_below_cap() -> None:
+    candidates = select_top_candidates(
+        ["600000", "000001", "600519", "300750", "601318"],
+        {
+            "600000": 0.9,
+            "000001": 0.8,
+            "600519": 0.7,
+            "300750": 0.6,
+            "601318": 0.5,
+        },
+        limit=5,
+    )
+
+    positions = apply_single_stock_weight_limit(candidates, single_stock_max_weight=0.3)
+
+    assert all(position.target_weight == 0.2 for position in positions)
+
+
+def test_apply_single_stock_weight_limit_rejects_invalid_cap() -> None:
+    candidates = select_top_candidates(["600000"], {"600000": 0.9}, limit=1)
+
+    with pytest.raises(ValueError, match="single_stock_max_weight must be greater than 0"):
+        apply_single_stock_weight_limit(candidates, single_stock_max_weight=0)
+
+    with pytest.raises(ValueError, match="single_stock_max_weight must be less than or equal to 1"):
+        apply_single_stock_weight_limit(candidates, single_stock_max_weight=1.2)
+
+
+def test_calculate_target_positions_selects_candidates_and_applies_single_stock_cap() -> None:
+    positions = calculate_target_positions(
+        ["600000", "000001", "600519"],
+        {
+            "600000": 0.9,
+            "000001": 0.8,
+            "600519": 0.7,
+        },
+        limit=2,
+        single_stock_max_weight=0.4,
+    )
+
+    assert [position.stock_code for position in positions] == ["600000", "000001"]
+    assert [position.target_weight for position in positions] == [0.4, 0.4]
