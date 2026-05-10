@@ -98,7 +98,7 @@
 
 | ID | 任务 | 状态 | 备注 |
 | --- | --- | --- | --- |
-| M6-1 | 实现周频调仓调度 | Not Started | 收盘后生成信号，下个交易日执行 |
+| M6-1 | 实现周频调仓调度 | Done | 收盘后生成信号，下个交易日执行，已实现 generate_weekly_rebalance_dates 和 get_next_trade_date_after，覆盖 Friday 选择、非交易日过滤、空数据处理、排序和下一个交易日查询 |
 | M6-2 | 实现订单生成 | Not Started | 处理目标仓位和 100 股整数手 |
 | M6-3 | 实现交易成本 | Not Started | 佣金、印花税、滑点 |
 | M6-4 | 实现 A 股交易限制 | Not Started | T+1、涨跌停、停牌 |
