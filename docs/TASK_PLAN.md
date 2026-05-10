@@ -105,7 +105,7 @@
 | M6-5 | 实现持仓和现金记账 | Done | 组合流水，已实现 Portfolio 和 PortfolioSnapshot 数据结构，apply_trade 函数支持买入/卖出更新持仓和现金，calculate_portfolio_value/calculate_position_value 计算组合总价值和持仓市值，create_snapshot 创建组合快照，create_initial_portfolio 创建初始组合，新增 17 项测试覆盖交易、价值计算和快照 |
 | M6-6 | 实现绩效指标 | Done | 收益、回撤、夏普、换手，已实现 PerformanceMetrics 和 DailyReturn 数据结构，calculate_total_return/calculate_annual_return 计算总收益率和年化收益率，calculate_max_drawdown 计算最大回撤，calculate_sharpe_ratio 计算夏普比率，calculate_turnover_rate 计算换手率，calculate_win_rate 计算胜率，calculate_performance_metrics 串联全部指标计算，新增 18 项测试覆盖全部指标和边界条件 |
 | M6-7 | 实现基准对比 | Done | 沪深 300 和中证 500，已实现 calculate_benchmark_return 计算基准收益率，calculate_cumulative_returns 计算累计收益率序列，calculate_benchmark_cumulative_returns 计算基准累计收益率，align_strategy_and_benchmark_dates 对齐策略和基准日期，新增 13 项测试覆盖基准收益计算、累计收益率、日期对齐和边界条件 |
-| M6-8 | 添加回测接口和测试 | Not Started | 概览和图表数据 |
+| M6-8 | 添加回测接口和测试 | Done | 概览和图表数据，已实现 get_backtest_summary 获取回测概览（核心指标），get_equity_curve 获取净值曲线，get_drawdown_curve 获取回撤曲线，遵循 data + meta API 响应约定，新增 portfolio_snapshots 表存储组合快照，新增 7 项测试覆盖空数据、API 约定和参数配置 |
 
 ## 里程碑 7：前端工作台
 

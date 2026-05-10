@@ -1,3 +1,4 @@
+from app.backtest.api import get_backtest_summary, get_drawdown_curve, get_equity_curve
 from app.backtest.benchmark import (
     align_strategy_and_benchmark_dates,
     calculate_benchmark_cumulative_returns,
@@ -63,8 +64,11 @@ __all__ = [
     "create_initial_portfolio",
     "create_snapshot",
     "filter_orders_by_trading_constraints",
+    "get_backtest_summary",
     "get_default_trading_constraints",
     "get_default_trading_cost",
+    "get_drawdown_curve",
+    "get_equity_curve",
     "generate_orders",
     "generate_weekly_rebalance_dates",
     "get_next_trade_date_after",

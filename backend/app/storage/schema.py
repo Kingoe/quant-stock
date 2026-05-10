@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import sqlite3
 
+SNAPSHOTS_TABLE = "portfolio_snapshots"
+
 SCHEMA_STATEMENTS = [
     """
     create table if not exists stocks (
@@ -101,6 +103,17 @@ SCHEMA_STATEMENTS = [
         foreign key (run_id) references strategy_runs (run_id)
     )
     """,
+    f"""
+    create table if not exists {SNAPSHOTS_TABLE} (
+        snapshot_id integer primary key autoincrement,
+        run_id integer not null,
+        run_date text not null,
+        cash real not null,
+        total_value real not null,
+        created_at text not null default current_timestamp,
+        foreign key (run_id) references strategy_runs (run_id)
+    )
+    """,
     """
     create index if not exists idx_index_constituents_trade_date
     on index_constituents (trade_date)
@@ -120,6 +133,10 @@ SCHEMA_STATEMENTS = [
     """
     create index if not exists idx_rebalance_recommendations_run_id
     on rebalance_recommendations (run_id)
+    """,
+    f"""
+    create index if not exists idx_portfolio_snapshots_run_id
+    on {SNAPSHOTS_TABLE} (run_id)
     """,
 ]
 

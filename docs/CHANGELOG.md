@@ -2,6 +2,13 @@
 
 ## 2026-05-10
 
+- 新增回测 API 模块，支持获取回测概览和图表数据。
+- 新增 get_backtest_summary 函数，获取回测核心指标（总收益、年化收益、最大回撤、夏普比率、换手率、胜率）。
+- 新增 get_equity_curve 函数，获取净值曲线数据。
+- 新增 get_drawdown_curve 函数，获取回撤曲线数据。
+- 新增 portfolio_snapshots 表到 schema，用于存储组合快照。
+- 新增 _load_portfolio_snapshots 辅助函数，从数据库加载组合快照。
+- 新增 7 项回测 API 测试，覆盖空数据库返回默认值、遵循 API 约定和自定义无风险利率。
 - 新增基准对比模块，支持与沪深 300、中证 500 等基准指数对比。
 - 新增 calculate_benchmark_return 函数，计算基准收益率（当前指数 - 前一指数）/ 前一指数。
 - 新增 calculate_cumulative_returns 函数，计算累计收益率序列。
