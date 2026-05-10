@@ -17,6 +17,7 @@ from app.reports import (
 )
 from app.run_log import RunStatus, create_run_log, update_run_log_status
 from app.scheduler import scheduler
+from app.simulation import PortfolioSnapshot, analyze_performance, get_execution_summary
 from app.storage import initialize_schema, open_sqlite_connection
 
 app = FastAPI(title="Quant Stock Backend")
@@ -74,6 +75,24 @@ class RunWeeklyStrategyResult(BaseModel):
     recommendations_count: int
     action_counts: dict[str, int]
     error_message: str | None = None
+
+
+class SimulationAccountSummary(BaseModel):
+    latest_value: float
+    cash: float
+    total_return: float
+
+
+class SimulationPerformanceSummary(BaseModel):
+    max_drawdown: float
+    daily_volatility: float
+
+
+class SimulationSummary(BaseModel):
+    latest_date: str | None
+    account: SimulationAccountSummary
+    performance: SimulationPerformanceSummary
+    execution: dict[str, Any]
 
 
 @app.get("/api/health")
@@ -385,6 +404,77 @@ def run_weekly_strategy(
 
     return {
         "data": data.model_dump() if data else None,
+        "meta": Meta(
+            request_id="local-dev",
+            generated_at=datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
+        ).model_dump(),
+    }
+
+
+@app.get("/api/simulation/summary")
+def get_simulation_summary(
+    database_url: str = Query(..., description="数据库 URL"),
+    run_date: str | None = Query(None, description="运行日期"),
+) -> dict[str, Any]:
+    """获取模拟运行摘要。"""
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        rows = connection.execute(
+            """
+            select snapshot_id, run_date, cash, total_value, created_at
+            from portfolio_snapshots
+            order by run_date
+            """
+        ).fetchall()
+
+        snapshots = [
+            PortfolioSnapshot(
+                id=row["snapshot_id"],
+                account_id="simulation",
+                snapshot_date=row["run_date"],
+                cash=row["cash"],
+                total_value=row["total_value"],
+                positions_value=max(row["total_value"] - row["cash"], 0),
+                created_at=row["created_at"],
+            )
+            for row in rows
+        ]
+
+        execution = get_execution_summary(connection, run_date=run_date)
+
+    if snapshots:
+        performance = analyze_performance(snapshots)
+        latest = snapshots[-1]
+        data = SimulationSummary(
+            latest_date=latest.snapshot_date,
+            account=SimulationAccountSummary(
+                latest_value=float(latest.total_value),
+                cash=float(latest.cash),
+                total_return=round(float(performance["total_return"]), 4),
+            ),
+            performance=SimulationPerformanceSummary(
+                max_drawdown=round(float(performance["max_drawdown"]), 4),
+                daily_volatility=round(float(performance["daily_volatility"]), 4),
+            ),
+            execution=execution,
+        )
+    else:
+        data = SimulationSummary(
+            latest_date=None,
+            account=SimulationAccountSummary(
+                latest_value=0,
+                cash=0,
+                total_return=0,
+            ),
+            performance=SimulationPerformanceSummary(
+                max_drawdown=0,
+                daily_volatility=0,
+            ),
+            execution=execution,
+        )
+
+    return {
+        "data": data.model_dump(),
         "meta": Meta(
             request_id="local-dev",
             generated_at=datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),

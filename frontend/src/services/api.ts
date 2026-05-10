@@ -78,6 +78,26 @@ interface RunWeeklyStrategyData {
   error_message?: string | null
 }
 
+interface SimulationSummaryData {
+  latest_date: string | null
+  account: {
+    latest_value: number
+    cash: number
+    total_return: number
+  }
+  performance: {
+    max_drawdown: number
+    daily_volatility: number
+  }
+  execution: {
+    total_signals: number
+    executed_signals: number
+    failed_signals: number
+    pending_signals: number
+    execution_rate: number
+  }
+}
+
 export const getDataStatus = async (): Promise<{ data: DataStatus; meta: ApiMeta }> => {
   try {
     const response = await axios.get(`${API_BASE_URL}/data/status`)
@@ -210,6 +230,44 @@ export const runWeeklyStrategy = async (
           watch: 0,
         },
         error_message: '运行失败，请检查数据和后端服务',
+      },
+      meta: {},
+    }
+  }
+}
+
+export const getSimulationSummary = async (): Promise<{
+  data: SimulationSummaryData
+  meta: ApiMeta
+}> => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/simulation/summary`, {
+      params: {
+        database_url: 'sqlite:///../data/quant.db',
+      },
+    })
+    return response.data
+  } catch (error) {
+    console.error('Failed to fetch simulation summary:', error)
+    return {
+      data: {
+        latest_date: null,
+        account: {
+          latest_value: 0,
+          cash: 0,
+          total_return: 0,
+        },
+        performance: {
+          max_drawdown: 0,
+          daily_volatility: 0,
+        },
+        execution: {
+          total_signals: 0,
+          executed_signals: 0,
+          failed_signals: 0,
+          pending_signals: 0,
+          execution_rate: 0,
+        },
       },
       meta: {},
     }

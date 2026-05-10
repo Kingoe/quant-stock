@@ -258,6 +258,7 @@ GET  /api/factors/scores/{stock_code}
 GET  /api/backtest/summary
 GET  /api/backtest/equity-curve
 GET  /api/backtest/drawdown
+GET  /api/simulation/summary
 GET  /api/config/strategy
 GET  /api/data/status
 POST /api/jobs/update-data
@@ -266,6 +267,8 @@ GET  /api/exports/latest
 ```
 
 `POST /api/jobs/run-weekly-strategy` 用于本地手动触发本周策略，不连接券商，不产生真实订单。接口会记录 `weekly_strategy` 运行日志，成功时返回调仓建议数量和 action 统计，失败时记录错误信息并返回 500。
+
+`GET /api/simulation/summary` 用于总览页展示模拟运行状态，读取本地组合快照和信号执行记录，返回模拟资产、收益、回撤、波动率和信号执行摘要。该接口只展示本地模拟结果，不代表真实账户资产。
 
 ## 11. 前端页面
 
