@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 from app.storage import initialize_schema, open_sqlite_connection
 
 

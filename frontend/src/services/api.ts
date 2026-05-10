@@ -2,6 +2,8 @@ import axios from 'axios'
 
 const API_BASE_URL = '/api'
 
+type ApiMeta = Record<string, unknown>
+
 interface DataStatus {
   daily_prices: { latest_date: string | null; has_data: boolean }
   valuation_metrics: { latest_date: string | null; has_data: boolean }
@@ -54,7 +56,7 @@ interface DrawdownData {
   drawdown: number
 }
 
-export const getDataStatus = async (): Promise<{ data: DataStatus; meta: any }> => {
+export const getDataStatus = async (): Promise<{ data: DataStatus; meta: ApiMeta }> => {
   try {
     const response = await axios.get(`${API_BASE_URL}/data/status`)
     return response.data
@@ -72,7 +74,7 @@ export const getDataStatus = async (): Promise<{ data: DataStatus; meta: any }> 
   }
 }
 
-export const getStrategyConfig = async (): Promise<{ data: StrategyConfig; meta: any }> => {
+export const getStrategyConfig = async (): Promise<{ data: StrategyConfig; meta: ApiMeta }> => {
   try {
     const response = await axios.get(`${API_BASE_URL}/config/strategy`)
     return response.data
@@ -91,7 +93,7 @@ export const getStrategyConfig = async (): Promise<{ data: StrategyConfig; meta:
   }
 }
 
-export const getRebalanceLatest = async (): Promise<{ data: RebalanceData; meta: any }> => {
+export const getRebalanceLatest = async (): Promise<{ data: RebalanceData; meta: ApiMeta }> => {
   try {
     const response = await axios.get(`${API_BASE_URL}/rebalance/latest`)
     return response.data
@@ -109,7 +111,7 @@ export const getRebalanceLatest = async (): Promise<{ data: RebalanceData; meta:
   }
 }
 
-export const getBacktestSummary = async (): Promise<{ data: BacktestMetrics; meta: any }> => {
+export const getBacktestSummary = async (): Promise<{ data: BacktestMetrics; meta: ApiMeta }> => {
   try {
     const response = await axios.get(`${API_BASE_URL}/backtest/summary`)
     return response.data
@@ -129,7 +131,7 @@ export const getBacktestSummary = async (): Promise<{ data: BacktestMetrics; met
   }
 }
 
-export const getEquityCurve = async (): Promise<{ data: EquityCurveData[]; meta: any }> => {
+export const getEquityCurve = async (): Promise<{ data: EquityCurveData[]; meta: ApiMeta }> => {
   try {
     const response = await axios.get(`${API_BASE_URL}/backtest/equity-curve`)
     return response.data
@@ -142,7 +144,7 @@ export const getEquityCurve = async (): Promise<{ data: EquityCurveData[]; meta:
   }
 }
 
-export const getDrawdownCurve = async (): Promise<{ data: DrawdownData[]; meta: any }> => {
+export const getDrawdownCurve = async (): Promise<{ data: DrawdownData[]; meta: ApiMeta }> => {
   try {
     const response = await axios.get(`${API_BASE_URL}/backtest/drawdown-curve`)
     return response.data

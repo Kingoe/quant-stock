@@ -1,4 +1,3 @@
-
 from app.data import (
     DailyPriceRecord,
     FinancialRecord,
@@ -38,7 +37,9 @@ def test_rebalance_api_returns_recommendations(tmp_path) -> None:
                 StockBasicRecord("600000", "浦发银行", "SH", "2000-01-01", "银行", False, "active"),
                 StockBasicRecord("000001", "平安银行", "SZ", "2000-01-01", "银行", False, "active"),
                 StockBasicRecord("600519", "贵州茅台", "SH", "2001-08-27", "白酒", False, "active"),
-                StockBasicRecord("300750", "宁德时代", "SZ", "2011-01-01", "新能源", False, "active"),
+                StockBasicRecord(
+                    "300750", "宁德时代", "SZ", "2011-01-01", "新能源", False, "active"
+                ),
                 StockBasicRecord("601318", "中国平安", "SH", "2007-01-01", "保险", False, "active"),
             ],
         )
@@ -68,11 +69,21 @@ def test_rebalance_api_returns_recommendations(tmp_path) -> None:
         load_financial_metrics(
             connection,
             [
-                FinancialRecord("600000", "2026-03-31", "2026-04-25", 20.0, 40.0, 20.0, 20.0, 2000.0, 1000.0),
-                FinancialRecord("000001", "2026-03-31", "2026-04-25", 5.0, 20.0, 5.0, 5.0, 300.0, 300.0),
-                FinancialRecord("600519", "2026-03-31", "2026-04-25", 4.0, 15.0, 3.0, 3.0, 200.0, 300.0),
-                FinancialRecord("300750", "2026-03-31", "2026-04-25", 3.0, 10.0, 2.0, 2.0, 100.0, 200.0),
-                FinancialRecord("601318", "2026-03-31", "2026-04-25", 6.0, 18.0, 4.0, 4.0, 500.0, 400.0),
+                FinancialRecord(
+                    "600000", "2026-03-31", "2026-04-25", 20.0, 40.0, 20.0, 20.0, 2000.0, 1000.0
+                ),
+                FinancialRecord(
+                    "000001", "2026-03-31", "2026-04-25", 5.0, 20.0, 5.0, 5.0, 300.0, 300.0
+                ),
+                FinancialRecord(
+                    "600519", "2026-03-31", "2026-04-25", 4.0, 15.0, 3.0, 3.0, 200.0, 300.0
+                ),
+                FinancialRecord(
+                    "300750", "2026-03-31", "2026-04-25", 3.0, 10.0, 2.0, 2.0, 100.0, 200.0
+                ),
+                FinancialRecord(
+                    "601318", "2026-03-31", "2026-04-25", 6.0, 18.0, 4.0, 4.0, 500.0, 400.0
+                ),
             ],
         )
 
@@ -174,8 +185,12 @@ def test_rebalance_api_returns_api_convention_response(tmp_path) -> None:
         load_financial_metrics(
             connection,
             [
-                FinancialRecord("600000", "2026-03-31", "2026-04-25", 20.0, 40.0, 20.0, 20.0, 2000.0, 1000.0),
-                FinancialRecord("000001", "2026-03-31", "2026-04-25", 5.0, 20.0, 5.0, 5.0, 300.0, 300.0),
+                FinancialRecord(
+                    "600000", "2026-03-31", "2026-04-25", 20.0, 40.0, 20.0, 20.0, 2000.0, 1000.0
+                ),
+                FinancialRecord(
+                    "000001", "2026-03-31", "2026-04-25", 5.0, 20.0, 5.0, 5.0, 300.0, 300.0
+                ),
             ],
         )
 

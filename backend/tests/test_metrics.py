@@ -4,7 +4,6 @@ import pytest
 
 from app.backtest.metrics import (
     DailyReturn,
-    PerformanceMetrics,
     calculate_annual_return,
     calculate_max_drawdown,
     calculate_performance_metrics,

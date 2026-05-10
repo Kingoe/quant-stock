@@ -489,9 +489,7 @@ def test_add_trading_availability_notes_limit_up_blocks_buy() -> None:
         {"600000": TradingStatus(is_limit_up=True)},
     )
 
-    assert any(
-        r.stock_code == "600000" and r.risk_note == "涨停无法买入" for r in updated
-    )
+    assert any(r.stock_code == "600000" and r.risk_note == "涨停无法买入" for r in updated)
     assert all(r.stock_code != "600000" or r.risk_note for r in updated if r.action == "buy")
 
 
@@ -516,9 +514,7 @@ def test_add_trading_availability_notes_limit_down_blocks_sell() -> None:
         {"600519": TradingStatus(is_limit_down=True)},
     )
 
-    assert any(
-        r.stock_code == "600519" and r.risk_note == "跌停无法卖出" for r in updated
-    )
+    assert any(r.stock_code == "600519" and r.risk_note == "跌停无法卖出" for r in updated)
 
 
 def test_add_trading_availability_notes_suspension_blocks_both() -> None:
@@ -542,9 +538,7 @@ def test_add_trading_availability_notes_suspension_blocks_both() -> None:
         {"600519": TradingStatus(is_suspended=True)},
     )
 
-    assert any(
-        r.stock_code == "600519" and r.risk_note == "停牌无法交易" for r in updated
-    )
+    assert any(r.stock_code == "600519" and r.risk_note == "停牌无法交易" for r in updated)
 
 
 def test_add_trading_availability_notes_limit_down_does_not_block_buy() -> None:

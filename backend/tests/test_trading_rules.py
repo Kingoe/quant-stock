@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 from app.backtest.trading_rules import (
     TradingConstraints,
     TradingDayStatus,
@@ -137,9 +135,7 @@ def test_filter_orders_with_default_constraints() -> None:
     orders = [("000001", "sell", 500, 10.0)]
     trading_day_status = {"000001": TradingDayStatus(is_limit_down=True)}
 
-    filtered = filter_orders_by_trading_constraints(
-        orders, trading_day_status
-    )
+    filtered = filter_orders_by_trading_constraints(orders, trading_day_status)
 
     assert len(filtered) == 0  # 默认约束包含跌停限制
 
@@ -168,9 +164,7 @@ def test_filter_orders_multiple_constraints() -> None:
     }
     buy_stocks_today = {"000003"}
 
-    filtered = filter_orders_by_trading_constraints(
-        orders, trading_day_status, buy_stocks_today
-    )
+    filtered = filter_orders_by_trading_constraints(orders, trading_day_status, buy_stocks_today)
 
     assert len(filtered) == 0
 

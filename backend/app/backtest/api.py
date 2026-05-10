@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
-
-from app.backtest.benchmark import calculate_benchmark_cumulative_returns, calculate_cumulative_returns
 from app.backtest.metrics import calculate_performance_metrics
 from app.backtest.portfolio import PortfolioSnapshot
 from app.storage import open_sqlite_connection
@@ -42,7 +39,6 @@ def get_backtest_summary(
         }
 
     values = [s.total_value for s in snapshots]
-    dates = [s.date for s in snapshots]
 
     initial_value = values[0]
     final_value = values[-1]
@@ -63,7 +59,9 @@ def get_backtest_summary(
                 "total_return": round(metrics.total_return, 4),
                 "annual_return": round(metrics.annual_return, 4),
                 "max_drawdown": round(metrics.max_drawdown, 4),
-                "sharpe_ratio": round(metrics.sharpe_ratio, 4) if metrics.sharpe_ratio is not None else None,
+                "sharpe_ratio": round(metrics.sharpe_ratio, 4)
+                if metrics.sharpe_ratio is not None
+                else None,
                 "turnover_rate": round(metrics.turnover_rate, 4),
                 "win_rate": round(metrics.win_rate, 4) if metrics.win_rate is not None else None,
             }
@@ -121,7 +119,7 @@ def get_drawdown_curve(
     drawdowns = []
     peak = values[0]
 
-    for date, value in zip(dates, values):
+    for date, value in zip(dates, values, strict=True):
         if value > peak:
             peak = value
         dd = (peak - value) / peak if peak > 0 else 0.0

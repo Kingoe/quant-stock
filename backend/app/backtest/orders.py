@@ -13,6 +13,7 @@ class Order:
         quantity: 股数（100 的倍数）
         price: 执行价格
     """
+
     stock_code: str
     action: str
     quantity: int

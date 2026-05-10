@@ -4,8 +4,6 @@ import pytest
 
 from app.backtest.portfolio import (
     Portfolio,
-    PortfolioSnapshot,
-    Position,
     apply_trade,
     calculate_portfolio_value,
     calculate_position_value,

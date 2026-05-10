@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from typing import Callable
 
 
 @dataclass(frozen=True)
@@ -17,6 +16,7 @@ class PerformanceMetrics:
         turnover_rate: 换手率
         win_rate: 胜率
     """
+
     total_return: float
     annual_return: float
     max_drawdown: float
@@ -34,6 +34,7 @@ class DailyReturn:
         strategy_return: 策略日收益率
         benchmark_return: 基准日收益率
     """
+
     date: str
     strategy_return: float
     benchmark_return: float | None = None
@@ -169,7 +170,9 @@ def calculate_win_rate(
         return 0.0
 
     if benchmark_key is None:
-        benchmark_key = lambda dr: dr.benchmark_return
+
+        def benchmark_key(dr: DailyReturn) -> float | None:
+            return dr.benchmark_return
 
     valid_returns = [dr for dr in daily_returns if benchmark_key(dr) is not None]
     if not valid_returns:

@@ -13,6 +13,7 @@ class TradingConstraints:
         limit_down: 跌停日不能卖出
         suspended: 停牌日不能交易
     """
+
     t_plus_one: bool = True
     limit_up: bool = True
     limit_down: bool = True
@@ -28,6 +29,7 @@ class TradingDayStatus:
         is_limit_down: 是否跌停
         is_suspended: 是否停牌
     """
+
     is_limit_up: bool = False
     is_limit_down: bool = False
     is_suspended: bool = False

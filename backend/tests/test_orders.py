@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.backtest.orders import Order, generate_orders
+from app.backtest.orders import generate_orders
 
 
 def test_generate_orders_creates_buy_order() -> None:

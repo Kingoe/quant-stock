@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import pytest
-
 from app.data import TradingCalendarRecord, load_trading_calendar
 from app.storage import initialize_schema, open_sqlite_connection
 
@@ -67,14 +65,16 @@ def test_generate_weekly_rebalance_dates_filters_non_trading_days() -> None:
         load_trading_calendar(
             connection,
             [
-                TradingCalendarRecord("2026-05-01", True),   # Friday
-                TradingCalendarRecord("2026-05-02", True),   # Saturday (not open normally but we mark as open)
-                TradingCalendarRecord("2026-05-03", True),   # Sunday
+                TradingCalendarRecord("2026-05-01", True),  # Friday
+                TradingCalendarRecord(
+                    "2026-05-02", True
+                ),  # Saturday (not open normally but we mark as open)
+                TradingCalendarRecord("2026-05-03", True),  # Sunday
                 TradingCalendarRecord("2026-05-04", True),
                 TradingCalendarRecord("2026-05-05", True),
                 TradingCalendarRecord("2026-05-06", True),
                 TradingCalendarRecord("2026-05-07", True),
-                TradingCalendarRecord("2026-05-08", True),   # Friday
+                TradingCalendarRecord("2026-05-08", True),  # Friday
             ],
         )
 

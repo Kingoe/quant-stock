@@ -13,6 +13,7 @@ class TradingCost:
         stamp_duty_rate: 印花税率，仅卖出时收取，如 0.001 表示千分之一
         slippage_rate: 滑点率，如 0.001 表示千分之一
     """
+
     commission_rate: float = 0.0003
     commission_min: float = 5.0
     stamp_duty_rate: float = 0.001
@@ -34,6 +35,7 @@ class TradeResult:
         total_cost: 总成本（佣金 + 印花税 + 滑点成本）
         net_value: 净价值
     """
+
     stock_code: str
     action: str
     quantity: int

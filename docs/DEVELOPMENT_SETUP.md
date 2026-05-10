@@ -14,7 +14,7 @@
 
 ### 前端
 
-- Node.js：20 LTS 或更高 LTS 版本
+- Node.js：20.19 或更高 LTS 版本
 - 包管理：npm
 - 构建工具：Vite
 - 前端框架：React + TypeScript
@@ -68,6 +68,8 @@ npm test
 npm run build
 npm run lint
 ```
+
+当前前端工具链使用 Vite 8 和 ESLint 10。如果本机默认 Node.js 低于 20.19，构建会失败；需要先切换到 Node.js 20.19 或更高版本。
 
 ## 5. 本地数据目录
 

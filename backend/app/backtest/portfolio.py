@@ -12,6 +12,7 @@ class Portfolio:
         cash: 现金余额
         positions: 股票代码到持股数的映射
     """
+
     cash: float
     positions: dict[str, int]
 
@@ -34,6 +35,7 @@ class Position:
         avg_cost: 平均成本
         market_value: 市值
     """
+
     stock_code: str
     shares: int
     avg_cost: float
@@ -50,6 +52,7 @@ class PortfolioSnapshot:
         positions: 持仓列表
         total_value: 总价值（现金 + 持仓市值）
     """
+
     date: str
     cash: float
     positions: list[Position]

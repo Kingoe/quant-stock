@@ -4,7 +4,6 @@ import pytest
 
 from app.backtest.costs import (
     TradingCost,
-    TradeResult,
     calculate_trading_cost,
     get_default_trading_cost,
 )
@@ -12,7 +11,9 @@ from app.backtest.costs import (
 
 def test_calculate_trading_cost_for_buy() -> None:
     """测试买入交易成本计算。"""
-    cost = TradingCost(commission_rate=0.0003, commission_min=5.0, stamp_duty_rate=0.001, slippage_rate=0.001)
+    cost = TradingCost(
+        commission_rate=0.0003, commission_min=5.0, stamp_duty_rate=0.001, slippage_rate=0.001
+    )
     result = calculate_trading_cost("000001", "buy", 1000, 10.0, cost)
 
     assert result.stock_code == "000001"
@@ -28,7 +29,9 @@ def test_calculate_trading_cost_for_buy() -> None:
 
 def test_calculate_trading_cost_for_sell() -> None:
     """测试卖出交易成本计算。"""
-    cost = TradingCost(commission_rate=0.0003, commission_min=5.0, stamp_duty_rate=0.001, slippage_rate=0.001)
+    cost = TradingCost(
+        commission_rate=0.0003, commission_min=5.0, stamp_duty_rate=0.001, slippage_rate=0.001
+    )
     result = calculate_trading_cost("000001", "sell", 1000, 10.0, cost)
 
     assert result.stock_code == "000001"
@@ -44,7 +47,9 @@ def test_calculate_trading_cost_for_sell() -> None:
 
 def test_calculate_trading_cost_commission_min() -> None:
     """测试最低佣金规则。"""
-    cost = TradingCost(commission_rate=0.0003, commission_min=5.0, stamp_duty_rate=0.001, slippage_rate=0.001)
+    cost = TradingCost(
+        commission_rate=0.0003, commission_min=5.0, stamp_duty_rate=0.001, slippage_rate=0.001
+    )
     result = calculate_trading_cost("000001", "buy", 100, 10.0, cost)
 
     assert result.commission == 5.0  # 10.01 * 100 * 0.0003 = 0.3003 < 5
@@ -52,7 +57,9 @@ def test_calculate_trading_cost_commission_min() -> None:
 
 def test_calculate_trading_cost_slippage() -> None:
     """测试滑点计算。"""
-    cost = TradingCost(commission_rate=0.0003, commission_min=5.0, stamp_duty_rate=0.001, slippage_rate=0.001)
+    cost = TradingCost(
+        commission_rate=0.0003, commission_min=5.0, stamp_duty_rate=0.001, slippage_rate=0.001
+    )
 
     buy_result = calculate_trading_cost("000001", "buy", 1000, 10.0, cost)
     assert buy_result.execution_price > buy_result.price  # 买入价格上涨
@@ -63,7 +70,9 @@ def test_calculate_trading_cost_slippage() -> None:
 
 def test_calculate_trading_cost_stamp_duty_only_on_sell() -> None:
     """测试印花税仅在卖出时收取。"""
-    cost = TradingCost(commission_rate=0.0003, commission_min=5.0, stamp_duty_rate=0.001, slippage_rate=0.001)
+    cost = TradingCost(
+        commission_rate=0.0003, commission_min=5.0, stamp_duty_rate=0.001, slippage_rate=0.001
+    )
 
     buy_result = calculate_trading_cost("000001", "buy", 1000, 10.0, cost)
     assert buy_result.stamp_duty == 0.0
@@ -98,7 +107,9 @@ def test_calculate_trading_cost_requires_positive_price() -> None:
 
 def test_calculate_trading_cost_large_trade() -> None:
     """测试大额交易。"""
-    cost = TradingCost(commission_rate=0.0003, commission_min=5.0, stamp_duty_rate=0.001, slippage_rate=0.001)
+    cost = TradingCost(
+        commission_rate=0.0003, commission_min=5.0, stamp_duty_rate=0.001, slippage_rate=0.001
+    )
     result = calculate_trading_cost("000001", "buy", 100000, 100.0, cost)
 
     assert result.execution_price == pytest.approx(100.1)  # 100 * (1 + 0.001)
@@ -108,7 +119,9 @@ def test_calculate_trading_cost_large_trade() -> None:
 
 def test_calculate_trading_cost_small_trade() -> None:
     """测试小额交易。"""
-    cost = TradingCost(commission_rate=0.0003, commission_min=5.0, stamp_duty_rate=0.001, slippage_rate=0.001)
+    cost = TradingCost(
+        commission_rate=0.0003, commission_min=5.0, stamp_duty_rate=0.001, slippage_rate=0.001
+    )
     result = calculate_trading_cost("000001", "buy", 100, 5.0, cost)
 
     assert result.execution_price == pytest.approx(5.005)  # 5 * (1 + 0.001)
@@ -118,7 +131,9 @@ def test_calculate_trading_cost_small_trade() -> None:
 
 def test_calculate_trading_cost_commission_above_min() -> None:
     """测试佣金高于最低值的场景。"""
-    cost = TradingCost(commission_rate=0.0003, commission_min=5.0, stamp_duty_rate=0.001, slippage_rate=0.001)
+    cost = TradingCost(
+        commission_rate=0.0003, commission_min=5.0, stamp_duty_rate=0.001, slippage_rate=0.001
+    )
     result = calculate_trading_cost("000001", "buy", 50000, 100.0, cost)
 
     assert result.execution_price == pytest.approx(100.1)  # 100 * (1 + 0.001)

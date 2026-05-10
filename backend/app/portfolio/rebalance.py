@@ -87,8 +87,7 @@ def generate_weekly_rebalance(
     )
 
     price_rows = {
-        row["stock_code"]: row
-        for row in get_prices_by_trade_date(connection, score_date)
+        row["stock_code"]: row for row in get_prices_by_trade_date(connection, score_date)
     }
     trading_status: dict[str, TradingStatus] = {}
     for stock_code in [r.stock_code for r in recommendations]:

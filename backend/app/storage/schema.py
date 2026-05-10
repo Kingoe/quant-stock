@@ -138,6 +138,67 @@ SCHEMA_STATEMENTS = [
     create index if not exists idx_portfolio_snapshots_run_id
     on {SNAPSHOTS_TABLE} (run_id)
     """,
+    """
+    create table if not exists run_logs (
+        id integer primary key autoincrement,
+        task_type text not null,
+        status text not null,
+        started_at text not null,
+        finished_at text,
+        error_message text,
+        result text,
+        created_at text not null default current_timestamp
+    )
+    """,
+    """
+    create index if not exists idx_run_logs_task_type
+    on run_logs (task_type)
+    """,
+    """
+    create index if not exists idx_run_logs_started_at
+    on run_logs (started_at desc)
+    """,
+    """
+    create table if not exists strategy_signals (
+        id integer primary key autoincrement,
+        run_date text not null,
+        stock_code text not null,
+        action text not null,
+        target_weight real,
+        score real,
+        rank integer,
+        reason text,
+        risk_note text,
+        created_at text not null default current_timestamp,
+        executed integer not null default 0
+    )
+    """,
+    """
+    create table if not exists signal_executions (
+        id integer primary key autoincrement,
+        signal_id integer not null,
+        stock_code text not null,
+        action text not null,
+        quantity integer not null,
+        price real not null,
+        executed_at text not null default current_timestamp,
+        status text not null,
+        reason text,
+        foreign key (signal_id) references strategy_signals (id)
+    )
+    """,
+    """
+    create index if not exists idx_strategy_signals_run_date
+    on strategy_signals (run_date desc)
+    """,
+    """
+    create index if not exists idx_strategy_signals_executed
+    on strategy_signals (executed)
+    """,
+    """
+    create index if not exists idx_signal_executions_signal_id
+    on signal_executions (signal_id)
+    """,
 ]
 
 

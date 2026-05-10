@@ -250,6 +250,9 @@ quant-stock/
 GET  /api/health
 GET  /api/overview
 GET  /api/rebalance/latest
+GET  /api/rebalance/html
+GET  /api/rebalance/excel
+GET  /api/rebalance/csv
 GET  /api/factors/scores
 GET  /api/factors/scores/{stock_code}
 GET  /api/backtest/summary

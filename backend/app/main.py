@@ -10,9 +10,27 @@ from app.data import (
     get_universe_stock_codes,
 )
 from app.portfolio import generate_weekly_rebalance
+from app.reports import (
+    generate_rebalance_csv,
+    generate_rebalance_excel,
+    generate_weekly_html_report,
+)
+from app.scheduler import scheduler
 from app.storage import open_sqlite_connection
 
 app = FastAPI(title="Quant Stock Backend")
+
+
+@app.on_event("startup")
+def startup_event() -> None:
+    """应用启动时初始化调度器。"""
+    scheduler.start()
+
+
+@app.on_event("shutdown")
+def shutdown_event() -> None:
+    """应用关闭时停止调度器。"""
+    scheduler.shutdown()
 
 
 class PaginationMeta(BaseModel):
@@ -203,3 +221,94 @@ def get_latest_rebalance(
                 generated_at=datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
             ).model_dump(),
         }
+
+
+@app.get("/api/rebalance/html")
+def get_rebalance_html(
+    index_code: str = Query("000906", description="指数代码"),
+    score_date: str = Query(..., description="评分日期"),
+    database_url: str = Query(..., description="数据库 URL"),
+    limit: int = Query(15, ge=1, le=50, description="候选股数量"),
+    single_stock_max_weight: float = Query(0.08, gt=0, le=1, description="单票最大仓位"),
+    industry_max_weight: float = Query(0.3, gt=0, le=1, description="行业最大仓位"),
+):
+    """生成 HTML 周报。"""
+    html = generate_weekly_html_report(
+        database_url,
+        index_code,
+        score_date,
+        limit=limit,
+        single_stock_max_weight=single_stock_max_weight,
+        industry_max_weight=industry_max_weight,
+    )
+    from fastapi.responses import HTMLResponse
+
+    return HTMLResponse(content=html)
+
+
+@app.get("/api/rebalance/excel")
+def get_rebalance_excel(
+    index_code: str = Query("000906", description="指数代码"),
+    score_date: str = Query(..., description="评分日期"),
+    database_url: str = Query(..., description="数据库 URL"),
+    limit: int = Query(15, ge=1, le=50, description="候选股数量"),
+    single_stock_max_weight: float = Query(0.08, gt=0, le=1, description="单票最大仓位"),
+    industry_max_weight: float = Query(0.3, gt=0, le=1, description="行业最大仓位"),
+):
+    """生成 Excel 调仓报告。"""
+    with open_sqlite_connection(database_url) as connection:
+        recommendations = generate_weekly_rebalance(
+            connection,
+            index_code,
+            score_date,
+            limit=limit,
+            single_stock_max_weight=single_stock_max_weight,
+            industry_max_weight=industry_max_weight,
+            current_positions=None,
+        )
+
+    excel_file = generate_rebalance_excel(recommendations)
+
+    from fastapi.responses import Response
+
+    return Response(
+        content=excel_file.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": f"attachment; filename=rebalance_{score_date}.xlsx",
+        },
+    )
+
+
+@app.get("/api/rebalance/csv")
+def get_rebalance_csv(
+    index_code: str = Query("000906", description="指数代码"),
+    score_date: str = Query(..., description="评分日期"),
+    database_url: str = Query(..., description="数据库 URL"),
+    limit: int = Query(15, ge=1, le=50, description="候选股数量"),
+    single_stock_max_weight: float = Query(0.08, gt=0, le=1, description="单票最大仓位"),
+    industry_max_weight: float = Query(0.3, gt=0, le=1, description="行业最大仓位"),
+):
+    """生成 CSV 调仓报告。"""
+    with open_sqlite_connection(database_url) as connection:
+        recommendations = generate_weekly_rebalance(
+            connection,
+            index_code,
+            score_date,
+            limit=limit,
+            single_stock_max_weight=single_stock_max_weight,
+            industry_max_weight=industry_max_weight,
+            current_positions=None,
+        )
+
+    csv_content = generate_rebalance_csv(recommendations)
+
+    from fastapi.responses import Response
+
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename=rebalance_{score_date}.csv",
+        },
+    )
