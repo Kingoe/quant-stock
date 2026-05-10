@@ -2,6 +2,13 @@
 
 ## 2026-05-10
 
+- 完成 M10-6 评估券商接口。
+- 新增 `evaluate_broker_readiness`，根据模拟运行天数、最大回撤、失败运行、通知渠道、人工确认和模拟交易验证判断是否允许进入人工小资金试点评审。
+- 默认券商动作只允许 `read_account`、`read_positions`、`read_orders`，不开放真实下单动作。
+- 新增 `docs/BROKER_INTERFACE_EVALUATION.md`，明确当前只评估券商接口，不接真实交易通道、不保存敏感凭证、不自动下单。
+- 更新项目约束，补充券商敏感凭证和真实委托边界。
+- 同步任务规划：M10-6 标记为 Done，M10 后续增强全部完成。
+
 - 完成 M10-5 添加通知渠道。
 - 新增 `notification_records` 表，记录通知通道、标题、正文、级别、元数据、状态和创建时间。
 - 新增 `NotificationMessage`、`DatabaseNotificationChannel`、`send_notification`、`list_notifications`，支持本地通知记录、多通道发送和通知历史查询。

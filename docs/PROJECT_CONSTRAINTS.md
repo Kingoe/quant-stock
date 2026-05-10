@@ -15,11 +15,14 @@
 - 导出调仓报告，供人工确认交易。
 - 后续接入更稳定的数据源。
 - 后续增加邮件、飞书、企业微信等通知渠道。
+- 评估券商只读接口和人工确认流程。
 
 ### 第一版不做
 
 - 不自动向券商下单。
 - 不直接接实盘交易。
+- 不保存券商交易密码、短信验证码、动态口令等敏感凭证。
+- 不在券商接口评估阶段发起真实委托或撤单。
 - 不做高频交易。
 - 不做日内 scalping。
 - 不在规则策略稳定前引入黑盒机器学习模型。
@@ -122,6 +125,7 @@
 - `docs/DATA_SOURCE_PLAN.md`
 - `docs/API_CONVENTIONS.md`
 - `docs/CHANGELOG.md`
+- `docs/BROKER_INTERFACE_EVALUATION.md`
 
 更新规则：
 
@@ -135,6 +139,7 @@
 - 关键技术选择变化：更新 `DECISIONS.md`
 - 数据源变化：更新 `DATA_SOURCE_PLAN.md`
 - API 响应格式变化：更新 `API_CONVENTIONS.md`
+- 券商接口边界变化：更新 `BROKER_INTERFACE_EVALUATION.md`
 - 完成用户可见或架构级变化：更新 `CHANGELOG.md`
 
 每轮开发必须遵守 `docs/ITERATION_WORKFLOW.md`。没有完成验证的功能不能标记为完成。
