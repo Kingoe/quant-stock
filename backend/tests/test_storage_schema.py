@@ -14,6 +14,7 @@ EXPECTED_TABLES = {
     "strategy_runs",
     "rebalance_recommendations",
     "parameter_experiments",
+    "notification_records",
 }
 
 
@@ -51,6 +52,8 @@ def test_initialize_schema_creates_expected_indexes(tmp_path) -> None:
         "idx_financial_metrics_report_date",
         "idx_rebalance_recommendations_run_id",
         "idx_parameter_experiments_created_at",
+        "idx_notification_records_created_at",
+        "idx_notification_records_channel",
     }.issubset(index_names)
 
 

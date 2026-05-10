@@ -214,6 +214,27 @@ SCHEMA_STATEMENTS = [
     create index if not exists idx_parameter_experiments_created_at
     on parameter_experiments (created_at desc, experiment_id desc)
     """,
+    """
+    create table if not exists notification_records (
+        id integer primary key autoincrement,
+        channel text not null,
+        title text not null,
+        content text not null,
+        level text not null,
+        metadata text not null,
+        status text not null,
+        error_message text,
+        created_at text not null default current_timestamp
+    )
+    """,
+    """
+    create index if not exists idx_notification_records_created_at
+    on notification_records (created_at desc, id desc)
+    """,
+    """
+    create index if not exists idx_notification_records_channel
+    on notification_records (channel)
+    """,
 ]
 
 

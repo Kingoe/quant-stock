@@ -2,6 +2,13 @@
 
 ## 2026-05-10
 
+- 完成 M10-5 添加通知渠道。
+- 新增 `notification_records` 表，记录通知通道、标题、正文、级别、元数据、状态和创建时间。
+- 新增 `NotificationMessage`、`DatabaseNotificationChannel`、`send_notification`、`list_notifications`，支持本地通知记录、多通道发送和通知历史查询。
+- 新增通知测试，覆盖本地通道记录、多通道发送、失败通道结果、通道过滤、数量限制和非法消息校验。
+- 明确第一版不接真实邮件、飞书、企业微信凭证，后续在本地通道稳定后再新增外部通道实现。
+- 同步任务规划：M10-5 标记为 Done，下一轮进入 M10-6 评估券商接口。
+
 - 完成 M10-4 添加参数实验跟踪。
 - 新增 `parameter_experiments` 表，记录实验名称、说明、参数 JSON、指标 JSON、备注和创建时间。
 - 新增 `record_parameter_experiment`、`get_parameter_experiment`、`list_parameter_experiments`，支持记录、查询和倒序列出实验。
