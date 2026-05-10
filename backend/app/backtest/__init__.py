@@ -1,3 +1,9 @@
+from app.backtest.benchmark import (
+    align_strategy_and_benchmark_dates,
+    calculate_benchmark_cumulative_returns,
+    calculate_benchmark_return,
+    calculate_cumulative_returns,
+)
 from app.backtest.costs import (
     TradeResult,
     TradingCost,
@@ -39,8 +45,12 @@ from app.backtest.trading_rules import (
 )
 
 __all__ = [
+    "align_strategy_and_benchmark_dates",
     "apply_trade",
     "calculate_annual_return",
+    "calculate_benchmark_cumulative_returns",
+    "calculate_benchmark_return",
+    "calculate_cumulative_returns",
     "calculate_max_drawdown",
     "calculate_performance_metrics",
     "calculate_portfolio_value",

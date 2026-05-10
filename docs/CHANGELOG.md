@@ -2,6 +2,12 @@
 
 ## 2026-05-10
 
+- 新增基准对比模块，支持与沪深 300、中证 500 等基准指数对比。
+- 新增 calculate_benchmark_return 函数，计算基准收益率（当前指数 - 前一指数）/ 前一指数。
+- 新增 calculate_cumulative_returns 函数，计算累计收益率序列。
+- 新增 calculate_benchmark_cumulative_returns 函数，计算基准累计收益率，支持缺失日期处理。
+- 新增 align_strategy_and_benchmark_dates 函数，对齐策略和基准日期。
+- 新增 13 项基准对比测试，覆盖基准收益计算、累计收益率、日期对齐和边界条件。
 - 新增绩效指标模块，支持计算策略绩效指标。
 - 新增 PerformanceMetrics 数据结构，包含总收益率、年化收益率、最大回撤、夏普比率、换手率和胜率。
 - 新增 DailyReturn 数据结构，包含日期、策略日收益率和基准日收益率。
