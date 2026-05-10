@@ -199,6 +199,21 @@ SCHEMA_STATEMENTS = [
     create index if not exists idx_signal_executions_signal_id
     on signal_executions (signal_id)
     """,
+    """
+    create table if not exists parameter_experiments (
+        experiment_id integer primary key autoincrement,
+        name text not null,
+        description text,
+        parameters text not null,
+        metrics text not null,
+        notes text,
+        created_at text not null default current_timestamp
+    )
+    """,
+    """
+    create index if not exists idx_parameter_experiments_created_at
+    on parameter_experiments (created_at desc, experiment_id desc)
+    """,
 ]
 
 

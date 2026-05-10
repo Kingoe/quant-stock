@@ -2,6 +2,12 @@
 
 ## 2026-05-10
 
+- 完成 M10-4 添加参数实验跟踪。
+- 新增 `parameter_experiments` 表，记录实验名称、说明、参数 JSON、指标 JSON、备注和创建时间。
+- 新增 `record_parameter_experiment`、`get_parameter_experiment`、`list_parameter_experiments`，支持记录、查询和倒序列出实验。
+- 新增参数实验测试，覆盖持久化、JSON 还原、倒序列表、数量限制、空名称和非法 JSON 参数。
+- 同步任务规划：M10-4 标记为 Done，下一轮进入 M10-5 添加通知渠道。
+
 - 完成 M10-3 添加行业中性化。
 - 新增 `neutralize_scores_by_industry`，支持按行业内排名把原始得分转换为行业中性化分数。
 - 行业中性化支持并列分数平均排名、缺失行业归入“未知”、小样本行业返回中性分。
