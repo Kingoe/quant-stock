@@ -2,6 +2,17 @@
 
 ## 2026-05-10
 
+- 新增绩效指标模块，支持计算策略绩效指标。
+- 新增 PerformanceMetrics 数据结构，包含总收益率、年化收益率、最大回撤、夏普比率、换手率和胜率。
+- 新增 DailyReturn 数据结构，包含日期、策略日收益率和基准日收益率。
+- 新增 calculate_total_return 函数，计算总收益率。
+- 新增 calculate_annual_return 函数，计算年化收益率。
+- 新增 calculate_max_drawdown 函数，计算最大回撤。
+- 新增 calculate_sharpe_ratio 函数，计算夏普比率（收益率均值 - 无风险利率）/ 标准差。
+- 新增 calculate_turnover_rate 函数，计算换手率（买入 + 卖出）/（2 * 平均组合价值）。
+- 新增 calculate_win_rate 函数，计算胜率（策略收益 > 基准收益的天数占比）。
+- 新增 calculate_performance_metrics 函数，串联计算全部绩效指标。
+- 新增 18 项绩效指标测试，覆盖总收益、年化收益、最大回撤、夏普比率、换手率、胜率和综合指标计算。
 - 新增持仓和现金记账模块，支持投资组合状态管理。
 - 新增 Portfolio 数据结构，包含现金余额和股票持仓，验证非负约束。
 - 新增 Position 数据结构，包含股票代码、持股数、平均成本和市值。

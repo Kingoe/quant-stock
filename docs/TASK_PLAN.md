@@ -103,7 +103,7 @@
 | M6-3 | 实现交易成本 | Done | 佣金、印花税、滑点，已实现 TradingCost 和 TradeResult 数据结构，calculate_trading_cost 函数支持买入/卖出成本计算，佣金含最低值规则，印花税仅卖出收取，滑点影响执行价格，新增 11 项测试覆盖全部场景 |
 | M6-4 | 实现 A 股交易限制 | Done | T+1、涨跌停、停牌，已实现 TradingConstraints 和 TradingDayStatus 数据结构，filter_orders_by_trading_constraints 函数支持订单过滤，T+1 阻止当日买入当日卖出，涨停阻止买入，跌停阻止卖出，停牌阻止所有交易，新增 14 项测试覆盖全部约束场景 |
 | M6-5 | 实现持仓和现金记账 | Done | 组合流水，已实现 Portfolio 和 PortfolioSnapshot 数据结构，apply_trade 函数支持买入/卖出更新持仓和现金，calculate_portfolio_value/calculate_position_value 计算组合总价值和持仓市值，create_snapshot 创建组合快照，create_initial_portfolio 创建初始组合，新增 17 项测试覆盖交易、价值计算和快照 |
-| M6-6 | 实现绩效指标 | Not Started | 收益、回撤、夏普、换手 |
+| M6-6 | 实现绩效指标 | Done | 收益、回撤、夏普、换手，已实现 PerformanceMetrics 和 DailyReturn 数据结构，calculate_total_return/calculate_annual_return 计算总收益率和年化收益率，calculate_max_drawdown 计算最大回撤，calculate_sharpe_ratio 计算夏普比率，calculate_turnover_rate 计算换手率，calculate_win_rate 计算胜率，calculate_performance_metrics 串联全部指标计算，新增 18 项测试覆盖全部指标和边界条件 |
 | M6-7 | 实现基准对比 | Not Started | 沪深 300 和中证 500 |
 | M6-8 | 添加回测接口和测试 | Not Started | 概览和图表数据 |
 
