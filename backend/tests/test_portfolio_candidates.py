@@ -15,6 +15,7 @@ from app.portfolio import (
     apply_single_stock_weight_limit,
     calculate_target_positions,
     calculate_top_candidates,
+    generate_rebalance_recommendations,
     select_top_candidates,
 )
 from app.storage import initialize_schema, open_sqlite_connection
@@ -256,3 +257,210 @@ def test_apply_industry_weight_limit_rejects_invalid_cap() -> None:
 
     with pytest.raises(ValueError, match="industry_max_weight must be less than or equal to 1"):
         apply_industry_weight_limit(positions, {"600000": "银行"}, industry_max_weight=1.2)
+
+
+def test_generate_rebalance_recommendations_buy_list() -> None:
+    positions = calculate_target_positions(
+        ["600000", "000001", "600519"],
+        {
+            "600000": 0.9,
+            "000001": 0.8,
+            "600519": 0.7,
+        },
+        limit=2,
+        single_stock_max_weight=0.4,
+    )
+
+    recommendations = generate_rebalance_recommendations(
+        target_positions=positions,
+        current_positions=None,
+        stock_names={"600000": "浦发银行", "000001": "平安银行"},
+        total_scores={"600000": 0.9, "000001": 0.8, "600519": 0.7},
+        top_candidates=None,
+    )
+
+    buy_list = [r for r in recommendations if r.action == "buy"]
+    assert len(buy_list) == 2
+    assert sorted([r.stock_code for r in buy_list]) == ["000001", "600000"]
+    assert buy_list[0].target_weight == 0.4
+    assert buy_list[0].reason == "新增目标持仓"
+
+
+def test_generate_rebalance_recommendations_sell_list() -> None:
+    positions = calculate_target_positions(
+        ["600000", "000001"],
+        {
+            "600000": 0.9,
+            "000001": 0.8,
+            "600519": 0.7,
+        },
+        limit=2,
+        single_stock_max_weight=0.4,
+    )
+
+    recommendations = generate_rebalance_recommendations(
+        target_positions=positions,
+        current_positions={"600000": 0.1, "600519": 0.2},
+        stock_names={"600000": "浦发银行", "600519": "贵州茅台"},
+        total_scores={"600000": 0.9, "000001": 0.8, "600519": 0.7},
+        top_candidates=None,
+    )
+
+    sell_list = [r for r in recommendations if r.action == "sell"]
+    assert len(sell_list) == 1
+    assert sell_list[0].stock_code == "600519"
+    assert sell_list[0].reason == "已不在目标组合中"
+    assert sell_list[0].target_weight is None
+
+
+def test_generate_rebalance_recommendations_hold_list() -> None:
+    positions = calculate_target_positions(
+        ["600000", "000001", "600519"],
+        {
+            "600000": 0.9,
+            "000001": 0.8,
+            "600519": 0.7,
+        },
+        limit=3,
+        single_stock_max_weight=0.3,
+    )
+
+    recommendations = generate_rebalance_recommendations(
+        target_positions=positions,
+        current_positions={"600000": 0.1, "000001": 0.1},
+        stock_names={"600000": "浦发银行", "000001": "平安银行", "600519": "贵州茅台"},
+        total_scores={"600000": 0.9, "000001": 0.8, "600519": 0.7},
+        top_candidates=None,
+    )
+
+    hold_list = [r for r in recommendations if r.action == "hold"]
+    assert len(hold_list) == 2
+    assert sorted([r.stock_code for r in hold_list]) == ["000001", "600000"]
+    assert hold_list[0].reason == "继续持有"
+
+
+def test_generate_rebalance_recommendations_watch_list() -> None:
+    positions = calculate_target_positions(
+        ["600000", "000001", "600519"],
+        {
+            "600000": 0.9,
+            "000001": 0.8,
+            "600519": 0.7,
+            "300750": 0.6,
+            "601318": 0.5,
+        },
+        limit=3,
+        single_stock_max_weight=0.3,
+    )
+
+    candidates = select_top_candidates(
+        ["600000", "000001", "600519", "300750", "601318"],
+        {
+            "600000": 0.9,
+            "000001": 0.8,
+            "600519": 0.7,
+            "300750": 0.6,
+            "601318": 0.5,
+        },
+        limit=5,
+    )
+
+    recommendations = generate_rebalance_recommendations(
+        target_positions=positions,
+        current_positions=None,
+        stock_names={"300750": "宁德时代", "601318": "中国平安"},
+        total_scores={"600000": 0.9, "000001": 0.8, "600519": 0.7, "300750": 0.6, "601318": 0.5},
+        top_candidates=candidates,
+    )
+
+    watch_list = [r for r in recommendations if r.action == "watch"]
+    assert len(watch_list) == 2
+    assert [r.stock_code for r in watch_list] == ["300750", "601318"]
+    assert watch_list[0].reason == "高分观察股"
+    assert watch_list[0].target_weight is None
+
+
+def test_generate_rebalance_recommendations_orders_by_action() -> None:
+    positions = calculate_target_positions(
+        ["600000", "000001"],
+        {
+            "600000": 0.9,
+            "000001": 0.8,
+        },
+        limit=2,
+        single_stock_max_weight=0.4,
+    )
+
+    recommendations = generate_rebalance_recommendations(
+        target_positions=positions,
+        current_positions={"600519": 0.2},
+        stock_names={"600000": "浦发银行", "000001": "平安银行", "600519": "贵州茅台"},
+        total_scores={"600000": 0.9, "000001": 0.8, "600519": 0.7},
+        top_candidates=None,
+    )
+
+    assert len(recommendations) == 3
+    assert recommendations[0].action == "buy"
+    assert recommendations[1].action == "buy"
+    assert recommendations[2].action == "sell"
+
+
+def test_generate_rebalance_recommendations_handles_empty_inputs() -> None:
+    recommendations = generate_rebalance_recommendations(
+        target_positions=[],
+        current_positions=None,
+        stock_names={},
+        total_scores={},
+        top_candidates=None,
+    )
+
+    assert len(recommendations) == 0
+
+
+def test_generate_rebalance_recommendations_mixed_scenario() -> None:
+    positions = calculate_target_positions(
+        ["600000", "000001", "600519"],
+        {
+            "600000": 0.9,
+            "000001": 0.8,
+            "600519": 0.7,
+            "300750": 0.6,
+        },
+        limit=3,
+        single_stock_max_weight=0.3,
+    )
+
+    candidates = select_top_candidates(
+        ["600000", "000001", "600519", "300750"],
+        {
+            "600000": 0.9,
+            "000001": 0.8,
+            "600519": 0.7,
+            "300750": 0.6,
+        },
+        limit=4,
+    )
+
+    recommendations = generate_rebalance_recommendations(
+        target_positions=positions,
+        current_positions={"600000": 0.1, "300750": 0.1},
+        stock_names={
+            "600000": "浦发银行",
+            "000001": "平安银行",
+            "600519": "贵州茅台",
+            "300750": "宁德时代",
+        },
+        total_scores={"600000": 0.9, "000001": 0.8, "600519": 0.7, "300750": 0.6},
+        top_candidates=candidates,
+    )
+
+    actions = [r.action for r in recommendations]
+    assert "buy" in actions
+    assert "hold" in actions
+    assert "sell" in actions
+    assert "watch" in actions
+
+    assert any(r.stock_code == "300750" and r.action == "sell" for r in recommendations)
+    assert any(r.stock_code == "000001" and r.action == "buy" for r in recommendations)
+    assert any(r.stock_code == "600000" and r.action == "hold" for r in recommendations)
+    assert any(r.stock_code == "300750" and r.action == "watch" for r in recommendations)

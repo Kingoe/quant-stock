@@ -22,6 +22,18 @@ class TargetPosition:
     target_weight: float
 
 
+@dataclass(frozen=True)
+class RebalanceRecommendation:
+    stock_code: str
+    stock_name: str | None
+    action: str
+    target_weight: float | None
+    total_score: float
+    rank: int | None
+    reason: str
+    risk_note: str | None
+
+
 def select_top_candidates(
     stock_codes: list[str],
     total_scores: Mapping[str, float],
@@ -127,3 +139,101 @@ def apply_industry_weight_limit(
         )
 
     return capped_positions
+
+
+def generate_rebalance_recommendations(
+    target_positions: list[TargetPosition],
+    current_positions: Mapping[str, float] | None,
+    stock_names: Mapping[str, str | None],
+    total_scores: Mapping[str, float] | None,
+    top_candidates: list[CandidateStock] | None,
+) -> list[RebalanceRecommendation]:
+    """生成买入、卖出、持有、观察列表。
+
+    Args:
+        target_positions: 目标持仓列表
+        current_positions: 当前持仓股票代码到权重的映射，None 表示无持仓
+        stock_names: 股票代码到名称的映射
+        total_scores: 股票代码到总分的映射
+        top_candidates: 优选候选股列表，用于生成观察列表
+
+    Returns:
+        调仓建议列表，按 action 排序：buy、hold、sell、watch
+    """
+    if current_positions is None:
+        current_positions = {}
+    if total_scores is None:
+        total_scores = {}
+    if top_candidates is None:
+        top_candidates = []
+
+    target_stock_set = {p.stock_code for p in target_positions}
+    current_stock_set = set(current_positions.keys())
+
+    recommendations: list[RebalanceRecommendation] = []
+
+    target_stock_map = {p.stock_code: p for p in target_positions}
+
+    for stock_code in target_stock_set - current_stock_set:
+        position = target_stock_map[stock_code]
+        recommendations.append(
+            RebalanceRecommendation(
+                stock_code=stock_code,
+                stock_name=stock_names.get(stock_code),
+                action="buy",
+                target_weight=position.target_weight,
+                total_score=total_scores.get(stock_code, 0.0),
+                rank=position.rank,
+                reason="新增目标持仓",
+                risk_note=None,
+            )
+        )
+
+    for stock_code in current_stock_set - target_stock_set:
+        recommendations.append(
+            RebalanceRecommendation(
+                stock_code=stock_code,
+                stock_name=stock_names.get(stock_code),
+                action="sell",
+                target_weight=None,
+                total_score=total_scores.get(stock_code, 0.0),
+                rank=None,
+                reason="已不在目标组合中",
+                risk_note=None,
+            )
+        )
+
+    for stock_code in target_stock_set & current_stock_set:
+        position = target_stock_map[stock_code]
+        recommendations.append(
+            RebalanceRecommendation(
+                stock_code=stock_code,
+                stock_name=stock_names.get(stock_code),
+                action="hold",
+                target_weight=position.target_weight,
+                total_score=total_scores.get(stock_code, 0.0),
+                rank=position.rank,
+                reason="继续持有",
+                risk_note=None,
+            )
+        )
+
+    for candidate in top_candidates:
+        if candidate.stock_code not in target_stock_set:
+            recommendations.append(
+                RebalanceRecommendation(
+                    stock_code=candidate.stock_code,
+                    stock_name=stock_names.get(candidate.stock_code),
+                    action="watch",
+                    target_weight=None,
+                    total_score=candidate.total_score,
+                    rank=candidate.rank,
+                    reason="高分观察股",
+                    risk_note=None,
+                )
+            )
+
+    action_order = {"buy": 0, "hold": 1, "sell": 2, "watch": 3}
+    recommendations.sort(key=lambda r: (action_order.get(r.action, 99), r.stock_code))
+
+    return recommendations
