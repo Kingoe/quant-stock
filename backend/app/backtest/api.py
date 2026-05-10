@@ -2,14 +2,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-from app.backtest import (
-    DailyReturn,
-    PortfolioSnapshot,
-    PerformanceMetrics,
-    calculate_benchmark_cumulative_returns,
-    calculate_cumulative_returns,
-    calculate_performance_metrics,
-)
+from app.backtest.benchmark import calculate_benchmark_cumulative_returns, calculate_cumulative_returns
+from app.backtest.metrics import calculate_performance_metrics
+from app.backtest.portfolio import PortfolioSnapshot
 from app.storage import open_sqlite_connection
 
 
