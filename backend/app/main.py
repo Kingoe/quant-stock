@@ -9,6 +9,7 @@ from app.data import (
     get_stock,
     get_universe_stock_codes,
 )
+from app.experiments import get_parameter_experiment, list_parameter_experiments
 from app.portfolio import generate_weekly_rebalance
 from app.reports import (
     generate_rebalance_csv,
@@ -93,6 +94,16 @@ class SimulationSummary(BaseModel):
     account: SimulationAccountSummary
     performance: SimulationPerformanceSummary
     execution: dict[str, Any]
+
+
+class ParameterExperimentItem(BaseModel):
+    experiment_id: int
+    name: str
+    description: str | None
+    parameters: dict[str, Any]
+    metrics: dict[str, Any]
+    notes: str | None
+    created_at: str
 
 
 @app.get("/api/health")
@@ -475,6 +486,70 @@ def get_simulation_summary(
 
     return {
         "data": data.model_dump(),
+        "meta": Meta(
+            request_id="local-dev",
+            generated_at=datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
+        ).model_dump(),
+    }
+
+
+@app.get("/api/experiments")
+def get_experiments(
+    database_url: str = Query(..., description="数据库 URL"),
+    limit: int = Query(20, ge=1, le=100, description="返回数量"),
+) -> dict[str, Any]:
+    """获取参数实验列表。"""
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        experiments = list_parameter_experiments(connection, limit=limit)
+
+    items = [
+        ParameterExperimentItem(
+            experiment_id=experiment.experiment_id,
+            name=experiment.name,
+            description=experiment.description,
+            parameters=experiment.parameters,
+            metrics=experiment.metrics,
+            notes=experiment.notes,
+            created_at=experiment.created_at,
+        )
+        for experiment in experiments
+    ]
+
+    return {
+        "data": [item.model_dump() for item in items],
+        "meta": Meta(
+            request_id="local-dev",
+            generated_at=datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
+        ).model_dump(),
+    }
+
+
+@app.get("/api/experiments/{experiment_id}")
+def get_experiment_detail(
+    experiment_id: int,
+    database_url: str = Query(..., description="数据库 URL"),
+) -> dict[str, Any]:
+    """获取单个参数实验详情。"""
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        experiment = get_parameter_experiment(connection, experiment_id)
+
+    if experiment is None:
+        raise HTTPException(status_code=404, detail="experiment not found")
+
+    item = ParameterExperimentItem(
+        experiment_id=experiment.experiment_id,
+        name=experiment.name,
+        description=experiment.description,
+        parameters=experiment.parameters,
+        metrics=experiment.metrics,
+        notes=experiment.notes,
+        created_at=experiment.created_at,
+    )
+
+    return {
+        "data": item.model_dump(),
         "meta": Meta(
             request_id="local-dev",
             generated_at=datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
