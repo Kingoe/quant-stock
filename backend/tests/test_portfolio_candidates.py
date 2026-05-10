@@ -11,6 +11,8 @@ from app.data import (
     load_valuations,
 )
 from app.portfolio import (
+    TradingStatus,
+    add_trading_availability_notes,
     apply_industry_weight_limit,
     apply_single_stock_weight_limit,
     calculate_target_positions,
@@ -464,3 +466,206 @@ def test_generate_rebalance_recommendations_mixed_scenario() -> None:
     assert any(r.stock_code == "000001" and r.action == "buy" for r in recommendations)
     assert any(r.stock_code == "600000" and r.action == "hold" for r in recommendations)
     assert any(r.stock_code == "300750" and r.action == "watch" for r in recommendations)
+
+
+def test_add_trading_availability_notes_limit_up_blocks_buy() -> None:
+    positions = calculate_target_positions(
+        ["600000", "000001"],
+        {"600000": 0.9, "000001": 0.8},
+        limit=2,
+        single_stock_max_weight=0.4,
+    )
+
+    recommendations = generate_rebalance_recommendations(
+        target_positions=positions,
+        current_positions=None,
+        stock_names={"600000": "浦发银行", "000001": "平安银行"},
+        total_scores={"600000": 0.9, "000001": 0.8},
+        top_candidates=None,
+    )
+
+    updated = add_trading_availability_notes(
+        recommendations,
+        {"600000": TradingStatus(is_limit_up=True)},
+    )
+
+    assert any(
+        r.stock_code == "600000" and r.risk_note == "涨停无法买入" for r in updated
+    )
+    assert all(r.stock_code != "600000" or r.risk_note for r in updated if r.action == "buy")
+
+
+def test_add_trading_availability_notes_limit_down_blocks_sell() -> None:
+    positions = calculate_target_positions(
+        ["600000", "000001"],
+        {"600000": 0.9, "000001": 0.8},
+        limit=2,
+        single_stock_max_weight=0.4,
+    )
+
+    recommendations = generate_rebalance_recommendations(
+        target_positions=positions,
+        current_positions={"600519": 0.2},
+        stock_names={"600000": "浦发银行", "000001": "平安银行", "600519": "贵州茅台"},
+        total_scores={"600000": 0.9, "000001": 0.8, "600519": 0.7},
+        top_candidates=None,
+    )
+
+    updated = add_trading_availability_notes(
+        recommendations,
+        {"600519": TradingStatus(is_limit_down=True)},
+    )
+
+    assert any(
+        r.stock_code == "600519" and r.risk_note == "跌停无法卖出" for r in updated
+    )
+
+
+def test_add_trading_availability_notes_suspension_blocks_both() -> None:
+    positions = calculate_target_positions(
+        ["600000", "000001"],
+        {"600000": 0.9, "000001": 0.8},
+        limit=2,
+        single_stock_max_weight=0.4,
+    )
+
+    recommendations = generate_rebalance_recommendations(
+        target_positions=positions,
+        current_positions={"600519": 0.2},
+        stock_names={"600000": "浦发银行", "000001": "平安银行", "600519": "贵州茅台"},
+        total_scores={"600000": 0.9, "000001": 0.8, "600519": 0.7},
+        top_candidates=None,
+    )
+
+    updated = add_trading_availability_notes(
+        recommendations,
+        {"600519": TradingStatus(is_suspended=True)},
+    )
+
+    assert any(
+        r.stock_code == "600519" and r.risk_note == "停牌无法交易" for r in updated
+    )
+
+
+def test_add_trading_availability_notes_limit_down_does_not_block_buy() -> None:
+    positions = calculate_target_positions(
+        ["600000"],
+        {"600000": 0.9},
+        limit=1,
+        single_stock_max_weight=0.4,
+    )
+
+    recommendations = generate_rebalance_recommendations(
+        target_positions=positions,
+        current_positions=None,
+        stock_names={"600000": "浦发银行"},
+        total_scores={"600000": 0.9},
+        top_candidates=None,
+    )
+
+    updated = add_trading_availability_notes(
+        recommendations,
+        {"600000": TradingStatus(is_limit_down=True)},
+    )
+
+    assert not any(r.risk_note for r in updated)
+
+
+def test_add_trading_availability_notes_limit_up_does_not_block_sell() -> None:
+    positions = calculate_target_positions(
+        ["600000"],
+        {"600000": 0.9},
+        limit=1,
+        single_stock_max_weight=0.4,
+    )
+
+    recommendations = generate_rebalance_recommendations(
+        target_positions=positions,
+        current_positions={"000001": 0.2},
+        stock_names={"600000": "浦发银行", "000001": "平安银行"},
+        total_scores={"600000": 0.9, "000001": 0.8},
+        top_candidates=None,
+    )
+
+    updated = add_trading_availability_notes(
+        recommendations,
+        {"000001": TradingStatus(is_limit_up=True)},
+    )
+
+    assert not any(r.risk_note for r in updated)
+
+
+def test_add_trading_availability_notes_appends_to_existing_risk_note() -> None:
+    positions = calculate_target_positions(
+        ["600000"],
+        {"600000": 0.9},
+        limit=1,
+        single_stock_max_weight=0.4,
+    )
+
+    recommendations = generate_rebalance_recommendations(
+        target_positions=positions,
+        current_positions=None,
+        stock_names={"600000": "浦发银行"},
+        total_scores={"600000": 0.9},
+        top_candidates=None,
+    )
+
+    updated = add_trading_availability_notes(
+        recommendations,
+        {"600000": TradingStatus(is_suspended=True)},
+    )
+
+    assert updated[0].risk_note == "停牌无法交易"
+
+
+def test_add_trading_availability_notes_preserves_other_fields() -> None:
+    positions = calculate_target_positions(
+        ["600000"],
+        {"600000": 0.9},
+        limit=1,
+        single_stock_max_weight=0.4,
+    )
+
+    recommendations = generate_rebalance_recommendations(
+        target_positions=positions,
+        current_positions=None,
+        stock_names={"600000": "浦发银行"},
+        total_scores={"600000": 0.9},
+        top_candidates=None,
+    )
+
+    updated = add_trading_availability_notes(
+        recommendations,
+        {"600000": TradingStatus(is_limit_up=True)},
+    )
+
+    assert updated[0].stock_code == recommendations[0].stock_code
+    assert updated[0].stock_name == recommendations[0].stock_name
+    assert updated[0].action == recommendations[0].action
+    assert updated[0].target_weight == recommendations[0].target_weight
+    assert updated[0].total_score == recommendations[0].total_score
+    assert updated[0].rank == recommendations[0].rank
+    assert updated[0].reason == recommendations[0].reason
+
+
+def test_add_trading_availability_notes_handles_missing_status() -> None:
+    positions = calculate_target_positions(
+        ["600000"],
+        {"600000": 0.9},
+        limit=1,
+        single_stock_max_weight=0.4,
+    )
+
+    recommendations = generate_rebalance_recommendations(
+        target_positions=positions,
+        current_positions=None,
+        stock_names={"600000": "浦发银行"},
+        total_scores={"600000": 0.9},
+        top_candidates=None,
+    )
+
+    updated = add_trading_availability_notes(recommendations, {})
+
+    assert len(updated) == len(recommendations)
+    assert not any(r.risk_note for r in updated)

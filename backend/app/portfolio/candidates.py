@@ -34,6 +34,13 @@ class RebalanceRecommendation:
     risk_note: str | None
 
 
+@dataclass(frozen=True)
+class TradingStatus:
+    is_limit_up: bool = False
+    is_limit_down: bool = False
+    is_suspended: bool = False
+
+
 def select_top_candidates(
     stock_codes: list[str],
     total_scores: Mapping[str, float],
@@ -237,3 +244,55 @@ def generate_rebalance_recommendations(
     recommendations.sort(key=lambda r: (action_order.get(r.action, 99), r.stock_code))
 
     return recommendations
+
+
+def add_trading_availability_notes(
+    recommendations: list[RebalanceRecommendation],
+    trading_status: Mapping[str, TradingStatus],
+) -> list[RebalanceRecommendation]:
+    """为调仓建议添加交易可用性风险提示。
+
+    Args:
+        recommendations: 调仓建议列表
+        trading_status: 股票代码到交易状态的映射
+
+    Returns:
+        添加风险提示后的调仓建议列表
+
+    风险提示规则：
+    - 买入 + 涨停 → "涨停无法买入"
+    - 卖出 + 跌停 → "跌停无法卖出"
+    - 买入/卖出 + 停牌 → "停牌无法交易"
+    """
+    updated: list[RebalanceRecommendation] = []
+    for recommendation in recommendations:
+        status = trading_status.get(recommendation.stock_code)
+        risk_note = None
+
+        if status and status.is_suspended:
+            if recommendation.action in ("buy", "sell"):
+                risk_note = "停牌无法交易"
+        elif status and status.is_limit_up:
+            if recommendation.action == "buy":
+                risk_note = "涨停无法买入"
+        elif status and status.is_limit_down:
+            if recommendation.action == "sell":
+                risk_note = "跌停无法卖出"
+
+        if risk_note and recommendation.risk_note:
+            risk_note = f"{recommendation.risk_note}；{risk_note}"
+
+        updated.append(
+            RebalanceRecommendation(
+                stock_code=recommendation.stock_code,
+                stock_name=recommendation.stock_name,
+                action=recommendation.action,
+                target_weight=recommendation.target_weight,
+                total_score=recommendation.total_score,
+                rank=recommendation.rank,
+                reason=recommendation.reason,
+                risk_note=risk_note or recommendation.risk_note,
+            )
+        )
+
+    return updated
