@@ -2,6 +2,9 @@
 
 ## 2026-05-11
 
+- 完成 M12-1 AkShare 字段覆盖实施计划。
+- 新增 `docs/superpowers/plans/2026-05-11-m12-1-akshare-field-coverage.md`，明确交易日历、指数成分、估值和财务指标的 mock 测试、实现步骤、文档同步和验证命令。
+
 - 完成 M12 数据运营增强规划。
 - 新增 `docs/superpowers/specs/2026-05-11-m12-data-operations-design.md`，明确数据更新、更新日志、数据质量检查、策略前置检查和完整周报流程的范围。
 - 新增 M12 任务规划：AkShare 字段覆盖、数据更新入口、更新日志 API、更新日志页面、数据质量报告、策略运行前置检查、一键完整周报流程。
