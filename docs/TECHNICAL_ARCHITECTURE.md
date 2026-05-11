@@ -288,10 +288,12 @@ GET  /api/backtest/drawdown
 GET  /api/simulation/summary
 GET  /api/config/strategy
 GET  /api/data/status
-POST /api/jobs/update-data
+POST /api/data/update
 POST /api/jobs/run-weekly-strategy
 GET  /api/exports/latest
 ```
+
+`POST /api/data/update` 用于本地手动触发数据更新，支持按数据类型调用统一 `DataProvider`，写入 SQLite 并记录 `data_update` 运行日志。第一版支持股票基础信息、交易日历、指数成分、日行情、估值和财务数据；接口只提供手动入口，不自动下单，也不自动运行策略。
 
 `POST /api/jobs/run-weekly-strategy` 用于本地手动触发本周策略，不连接券商，不产生真实订单。接口会记录 `weekly_strategy` 运行日志，成功时返回调仓建议数量和 action 统计，失败时记录错误信息并返回 500。
 

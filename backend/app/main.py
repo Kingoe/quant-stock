@@ -3,12 +3,21 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI, HTTPException, Query
-from pydantic import BaseModel
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
 
 from app.broker_evaluation import BrokerReadinessInput, evaluate_broker_readiness
 from app.data import (
+    AkShareProvider,
+    DataProvider,
+    DataProviderError,
+    DataUpdateCommand,
+    DataUpdateError,
+    LocalCsvProvider,
     get_stock,
     get_universe_stock_codes,
+    run_data_update,
 )
 from app.experiments import get_parameter_experiment, list_parameter_experiments
 from app.notifications import list_notifications
@@ -21,9 +30,20 @@ from app.reports import (
 from app.run_log import RunStatus, create_run_log, update_run_log_status
 from app.scheduler import scheduler
 from app.simulation import PortfolioSnapshot, analyze_performance, get_execution_summary
-from app.storage import initialize_schema, open_sqlite_connection
+from app.storage import StorageError, initialize_schema, open_sqlite_connection
 
 app = FastAPI(title="Quant Stock Backend")
+
+
+@app.exception_handler(RequestValidationError)
+def validation_exception_handler(_request: Any, exc: RequestValidationError) -> JSONResponse:
+    """统一请求校验错误响应。"""
+    return _error_response(
+        status_code=422,
+        code="invalid_request",
+        message="请求参数不合法，请检查必填字段和字段类型。",
+        details={"errors": exc.errors()},
+    )
 
 
 @app.on_event("startup")
@@ -80,6 +100,29 @@ class RunWeeklyStrategyResult(BaseModel):
     error_message: str | None = None
 
 
+class DataUpdateRequest(BaseModel):
+    database_url: str
+    source: str = "local_csv"
+    csv_root_dir: str | None = None
+    data_type: str
+    stock_codes: list[str] = Field(default_factory=list)
+    start_date: str | None = None
+    end_date: str | None = None
+    trade_date: str | None = None
+    index_code: str | None = None
+
+
+class DataUpdateResponse(BaseModel):
+    log_id: int | None
+    status: str
+    data_type: str
+    source: str
+    records_count: int
+    skipped_count: int
+    parameters: dict[str, Any]
+    error_message: str | None = None
+
+
 class SimulationAccountSummary(BaseModel):
     latest_value: float
     cash: float
@@ -126,6 +169,45 @@ class BrokerReadinessResponse(BaseModel):
     failed_reasons: list[str]
     allowed_actions: list[str]
     trade_boundary: str
+
+
+def _meta() -> dict[str, Any]:
+    return Meta(
+        request_id="local-dev",
+        generated_at=datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
+    ).model_dump()
+
+
+def _error_response(
+    status_code: int,
+    code: str,
+    message: str,
+    details: dict[str, Any] | None = None,
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "error": {
+                "code": code,
+                "message": message,
+                "details": details or {},
+            },
+            "meta": _meta(),
+        },
+    )
+
+
+def _create_data_provider(request: DataUpdateRequest) -> DataProvider:
+    if request.source == "local_csv":
+        if not request.csv_root_dir:
+            raise DataUpdateError("csv_root_dir is required")
+        return LocalCsvProvider(request.csv_root_dir)
+
+    if request.source == "akshare":
+        valuation_symbols = request.stock_codes or None
+        return AkShareProvider(valuation_symbols=valuation_symbols)
+
+    raise DataUpdateError(f"unsupported source: {request.source}")
 
 
 @app.get("/api/health")
@@ -441,6 +523,104 @@ def run_weekly_strategy(
             request_id="local-dev",
             generated_at=datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
         ).model_dump(),
+    }
+
+
+@app.post("/api/data/update")
+def update_data(request: DataUpdateRequest) -> Any:
+    """手动触发数据更新任务。"""
+    try:
+        with open_sqlite_connection(request.database_url) as connection:
+            initialize_schema(connection)
+            log = create_run_log(connection, "data_update")
+            if log.id is None:
+                raise HTTPException(status_code=500, detail="failed to create run log")
+
+            update_run_log_status(connection, log.id, RunStatus.RUNNING)
+
+            try:
+                provider = _create_data_provider(request)
+                result = run_data_update(
+                    connection,
+                    provider,
+                    DataUpdateCommand(
+                        data_type=request.data_type,
+                        start_date=request.start_date,
+                        end_date=request.end_date,
+                        trade_date=request.trade_date,
+                        index_code=request.index_code,
+                        stock_codes=request.stock_codes,
+                    ),
+                )
+            except DataUpdateError as exc:
+                error_message = str(exc)
+                update_run_log_status(
+                    connection,
+                    log.id,
+                    RunStatus.FAILED,
+                    error_message=error_message,
+                )
+                return _error_response(
+                    status_code=400,
+                    code="invalid_request",
+                    message=error_message,
+                    details={"data_type": request.data_type, "source": request.source},
+                )
+            except DataProviderError as exc:
+                error_message = str(exc)
+                update_run_log_status(
+                    connection,
+                    log.id,
+                    RunStatus.FAILED,
+                    error_message=error_message,
+                )
+                return _error_response(
+                    status_code=502,
+                    code="provider_error",
+                    message=error_message,
+                    details={"data_type": request.data_type, "source": request.source},
+                )
+            except Exception as exc:
+                error_message = str(exc)
+                update_run_log_status(
+                    connection,
+                    log.id,
+                    RunStatus.FAILED,
+                    error_message=error_message,
+                )
+                return _error_response(
+                    status_code=500,
+                    code="internal_error",
+                    message=error_message,
+                    details={"data_type": request.data_type, "source": request.source},
+                )
+
+            response = DataUpdateResponse(
+                log_id=log.id,
+                status="success",
+                data_type=result.data_type,
+                source=request.source,
+                records_count=result.records_count,
+                skipped_count=result.skipped_count,
+                parameters=result.parameters,
+            )
+            update_run_log_status(
+                connection,
+                log.id,
+                RunStatus.SUCCESS,
+                result=response.model_dump(exclude={"log_id", "status", "error_message"}),
+            )
+    except StorageError as exc:
+        return _error_response(
+            status_code=400,
+            code="invalid_request",
+            message=str(exc),
+            details={"database_url": request.database_url},
+        )
+
+    return {
+        "data": response.model_dump(),
+        "meta": _meta(),
     }
 
 

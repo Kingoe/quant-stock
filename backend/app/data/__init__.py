@@ -70,6 +70,13 @@ from app.data.universe import (
     filter_stocks_by_suspension,
     get_universe_stock_codes,
 )
+from app.data.update_tasks import (
+    DataUpdateCommand,
+    DataUpdateError,
+    DataUpdateResult,
+    DataUpdateType,
+    run_data_update,
+)
 from app.data.valuation import (
     ValuationRecord,
     get_valuation_by_trade_date,
@@ -86,6 +93,10 @@ __all__ = [
     "AkShareProvider",
     "DataProvider",
     "DataProviderError",
+    "DataUpdateCommand",
+    "DataUpdateError",
+    "DataUpdateResult",
+    "DataUpdateType",
     "LocalCsvProvider",
     "StockBasicRecord",
     "TradingCalendarRecord",
@@ -131,5 +142,6 @@ __all__ = [
     "load_valuations",
     "neutralize_scores_by_industry",
     "rank_factor_values",
+    "run_data_update",
     "winsorize_factor_values",
 ]
