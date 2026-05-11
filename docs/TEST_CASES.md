@@ -171,6 +171,7 @@
 
 - `GET /api/experiments` 返回最近参数实验列表，并支持数量限制。
 - `GET /api/experiments/{experiment_id}` 返回单条实验详情；不存在时返回 404。
+- `GET /api/notifications` 返回通知历史列表，并支持通道过滤和数量限制。
 - `GET /api/overview` 返回总览指标。
 - `GET /api/rebalance/latest` 返回买入、卖出、持有、观察列表。
 - `GET /api/factors/scores` 支持分页和排序。

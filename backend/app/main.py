@@ -10,6 +10,7 @@ from app.data import (
     get_universe_stock_codes,
 )
 from app.experiments import get_parameter_experiment, list_parameter_experiments
+from app.notifications import list_notifications
 from app.portfolio import generate_weekly_rebalance
 from app.reports import (
     generate_rebalance_csv,
@@ -103,6 +104,18 @@ class ParameterExperimentItem(BaseModel):
     parameters: dict[str, Any]
     metrics: dict[str, Any]
     notes: str | None
+    created_at: str
+
+
+class NotificationRecordItem(BaseModel):
+    id: int
+    channel: str
+    title: str
+    content: str
+    level: str
+    metadata: dict[str, Any]
+    status: str
+    error_message: str | None
     created_at: str
 
 
@@ -550,6 +563,41 @@ def get_experiment_detail(
 
     return {
         "data": item.model_dump(),
+        "meta": Meta(
+            request_id="local-dev",
+            generated_at=datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
+        ).model_dump(),
+    }
+
+
+@app.get("/api/notifications")
+def get_notifications(
+    database_url: str = Query(..., description="数据库 URL"),
+    channel: str | None = Query(None, description="通知通道"),
+    limit: int = Query(20, ge=1, le=100, description="返回数量"),
+) -> dict[str, Any]:
+    """获取通知历史。"""
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+        records = list_notifications(connection, channel=channel, limit=limit)
+
+    items = [
+        NotificationRecordItem(
+            id=record.id,
+            channel=record.channel,
+            title=record.title,
+            content=record.content,
+            level=record.level,
+            metadata=record.metadata,
+            status=record.status,
+            error_message=record.error_message,
+            created_at=record.created_at,
+        )
+        for record in records
+    ]
+
+    return {
+        "data": [item.model_dump() for item in items],
         "meta": Meta(
             request_id="local-dev",
             generated_at=datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
