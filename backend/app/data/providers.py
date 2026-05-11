@@ -210,8 +210,9 @@ class LocalCsvProvider:
 class AkShareProvider:
     """AkShare 在线数据源适配器。"""
 
-    def __init__(self, adjust: str = "qfq") -> None:
+    def __init__(self, adjust: str = "qfq", valuation_symbols: list[str] | None = None) -> None:
         self.adjust = adjust
+        self.valuation_symbols = valuation_symbols
 
     def get_stock_basics(self) -> list[StockBasicRecord]:
         akshare = _import_akshare()
@@ -259,17 +260,61 @@ class AkShareProvider:
         ]
 
     def get_trading_calendar(self, start_date: str, end_date: str) -> list[TradingCalendarRecord]:
-        raise NotImplementedError("AkShare trading calendar adapter is not implemented yet")
+        akshare = _import_akshare()
+        frame = akshare.tool_trade_date_hist_sina()
+        records: list[TradingCalendarRecord] = []
+        for _, row in frame.iterrows():
+            trade_date = _date_text(_pick(row, ("trade_date", "交易日", "日期")))
+            if start_date <= trade_date <= end_date:
+                records.append(TradingCalendarRecord(trade_date=trade_date, is_open=True))
+        return records
 
     def get_index_constituents(
         self,
         index_code: str,
         trade_date: str,
     ) -> list[IndexConstituentRecord]:
-        raise NotImplementedError("AkShare index constituents adapter is not implemented yet")
+        akshare = _import_akshare()
+        frame = akshare.index_stock_cons(symbol=index_code)
+        return [
+            IndexConstituentRecord(
+                index_code=index_code,
+                stock_code=_stock_code_text(
+                    _pick(row, ("品种代码", "成分券代码", "stock_code", "代码"))
+                ),
+                trade_date=trade_date,
+                weight=_optional_float_value(_pick_optional(row, ("权重", "weight"))),
+            )
+            for _, row in frame.iterrows()
+        ]
 
     def get_valuations(self, trade_date: str) -> list[ValuationRecord]:
-        raise NotImplementedError("AkShare valuation adapter is not implemented yet")
+        akshare = _import_akshare()
+        records: list[ValuationRecord] = []
+        for stock_code in self._valuation_symbols():
+            frame = akshare.stock_a_indicator_lg(symbol=stock_code)
+            for _, row in frame.iterrows():
+                row_date = _date_text(_pick(row, ("trade_date", "日期", "date")))
+                if row_date != trade_date:
+                    continue
+                records.append(
+                    ValuationRecord(
+                        stock_code=stock_code,
+                        trade_date=row_date,
+                        pe=_optional_float_value(_pick_optional(row, ("pe", "市盈率", "PE"))),
+                        pb=_optional_float_value(_pick_optional(row, ("pb", "市净率", "PB"))),
+                        ps=_optional_float_value(_pick_optional(row, ("ps", "市销率", "PS"))),
+                        dividend_yield=_optional_float_value(
+                            _pick_optional(row, ("dv_ratio", "股息率", "dividend_yield"))
+                        ),
+                    )
+                )
+        return records
+
+    def _valuation_symbols(self) -> list[str]:
+        if self.valuation_symbols is not None:
+            return self.valuation_symbols
+        return [record.stock_code for record in self.get_stock_basics()]
 
     def get_financial_metrics(
         self,
@@ -277,7 +322,56 @@ class AkShareProvider:
         start_date: str,
         end_date: str,
     ) -> list[FinancialRecord]:
-        raise NotImplementedError("AkShare financial adapter is not implemented yet")
+        akshare = _import_akshare()
+        frame = akshare.stock_financial_abstract(symbol=stock_code)
+        metric_column = next(
+            (column for column in ("指标", "item", "metric") if column in frame.columns),
+            None,
+        )
+        if metric_column is None:
+            raise DataProviderError("missing required AkShare columns: 指标, item, metric")
+
+        metric_fields = {
+            "净资产收益率": "roe",
+            "销售毛利率": "gross_margin",
+            "营业收入同比增长率": "revenue_growth",
+            "净利润同比增长率": "net_profit_growth",
+            "经营活动产生的现金流量净额": "operating_cash_flow",
+            "净利润": "net_profit",
+        }
+        period_columns = [column for column in frame.columns if column != metric_column]
+        records: list[FinancialRecord] = []
+        for period_column in period_columns:
+            report_date = _date_text(period_column)
+            if not (start_date <= report_date <= end_date):
+                continue
+            values: dict[str, float | None] = {
+                "roe": None,
+                "gross_margin": None,
+                "revenue_growth": None,
+                "net_profit_growth": None,
+                "operating_cash_flow": None,
+                "net_profit": None,
+            }
+            for _, row in frame.iterrows():
+                metric_name = str(row[metric_column]).strip()
+                field_name = metric_fields.get(metric_name)
+                if field_name is not None:
+                    values[field_name] = _optional_float_value(row[period_column])
+            records.append(
+                FinancialRecord(
+                    stock_code=stock_code,
+                    report_date=report_date,
+                    disclosure_date=report_date,
+                    roe=values["roe"],
+                    gross_margin=values["gross_margin"],
+                    revenue_growth=values["revenue_growth"],
+                    net_profit_growth=values["net_profit_growth"],
+                    operating_cash_flow=values["operating_cash_flow"],
+                    net_profit=values["net_profit"],
+                )
+            )
+        return records
 
 
 def _daily_price_from_row(row: dict[str, str]) -> DailyPriceRecord:
@@ -303,6 +397,44 @@ def _import_akshare():
     except ImportError as exc:
         raise DataProviderError("akshare is not installed") from exc
     return akshare
+
+
+def _date_text(value: object) -> str:
+    text = str(value)
+    if " " in text:
+        text = text.split(" ", maxsplit=1)[0]
+    text = text.replace("/", "-")
+    if len(text) == 8 and text.isdigit():
+        return f"{text[:4]}-{text[4:6]}-{text[6:]}"
+    return text
+
+
+def _pick(row, names: tuple[str, ...]):
+    for name in names:
+        if name in row and row[name] is not None:
+            return row[name]
+    raise DataProviderError(f"missing required AkShare columns: {', '.join(names)}")
+
+
+def _pick_optional(row, names: tuple[str, ...]):
+    for name in names:
+        if name in row and row[name] is not None:
+            return row[name]
+    return None
+
+
+def _stock_code_text(value: object) -> str:
+    return str(value).strip().zfill(6)
+
+
+def _optional_float_value(value: object | None) -> float | None:
+    if value is None:
+        return None
+    text = str(value).strip()
+    if text == "" or text.lower() == "nan":
+        return None
+    text = text.replace(",", "").replace("元", "").replace("%", "")
+    return float(text)
 
 
 def _infer_exchange(stock_code: str) -> str:
