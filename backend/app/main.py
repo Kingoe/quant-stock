@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo
 from fastapi import FastAPI, HTTPException, Query
 from pydantic import BaseModel
 
+from app.broker_evaluation import BrokerReadinessInput, evaluate_broker_readiness
 from app.data import (
     get_stock,
     get_universe_stock_codes,
@@ -117,6 +118,14 @@ class NotificationRecordItem(BaseModel):
     status: str
     error_message: str | None
     created_at: str
+
+
+class BrokerReadinessResponse(BaseModel):
+    status: str
+    ready_for_manual_pilot: bool
+    failed_reasons: list[str]
+    allowed_actions: list[str]
+    trade_boundary: str
 
 
 @app.get("/api/health")
@@ -598,6 +607,43 @@ def get_notifications(
 
     return {
         "data": [item.model_dump() for item in items],
+        "meta": Meta(
+            request_id="local-dev",
+            generated_at=datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
+        ).model_dump(),
+    }
+
+
+@app.get("/api/broker/readiness")
+def get_broker_readiness(
+    simulation_days: int = Query(0, ge=0, description="模拟运行天数"),
+    max_drawdown: float = Query(0, ge=0, description="模拟运行最大回撤"),
+    failed_runs: int = Query(0, ge=0, description="失败运行次数"),
+    notifications_enabled: bool = Query(False, description="是否启用通知渠道"),
+    manual_approval_enabled: bool = Query(False, description="是否启用人工确认"),
+    paper_trading_verified: bool = Query(False, description="是否完成模拟交易验证"),
+) -> dict[str, Any]:
+    """评估是否允许进入券商人工小资金试点评审。"""
+    result = evaluate_broker_readiness(
+        BrokerReadinessInput(
+            simulation_days=simulation_days,
+            max_drawdown=max_drawdown,
+            failed_runs=failed_runs,
+            notifications_enabled=notifications_enabled,
+            manual_approval_enabled=manual_approval_enabled,
+            paper_trading_verified=paper_trading_verified,
+        )
+    )
+    data = BrokerReadinessResponse(
+        status=result.status,
+        ready_for_manual_pilot=result.ready_for_manual_pilot,
+        failed_reasons=result.failed_reasons,
+        allowed_actions=result.allowed_actions,
+        trade_boundary="不是实盘交易入口，仅用于人工小资金试点评审。",
+    )
+
+    return {
+        "data": data.model_dump(),
         "meta": Meta(
             request_id="local-dev",
             generated_at=datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
