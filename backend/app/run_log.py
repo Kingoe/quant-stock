@@ -111,6 +111,7 @@ def get_recent_run_logs(
     connection: sqlite3.Connection,
     limit: int = 50,
     task_type: str | None = None,
+    status: RunStatus | None = None,
 ) -> list[RunLog]:
     """获取最近的运行日志。
 
@@ -118,6 +119,7 @@ def get_recent_run_logs(
         connection: SQLite 连接
         limit: 返回数量限制
         task_type: 筛选任务类型
+        status: 筛选运行状态
 
     Returns:
         运行日志列表
@@ -127,9 +129,18 @@ def get_recent_run_logs(
     query = "select * from run_logs"
     params: list[Any] = []
 
+    where_clauses: list[str] = []
+
     if task_type:
-        query += " where task_type = ?"
+        where_clauses.append("task_type = ?")
         params.append(task_type)
+
+    if status:
+        where_clauses.append("status = ?")
+        params.append(status.value)
+
+    if where_clauses:
+        query += " where " + " and ".join(where_clauses)
 
     query += " order by started_at desc limit ?"
     params.append(limit)

@@ -140,6 +140,29 @@ def test_get_recent_run_logs_with_task_type_filter() -> None:
         assert all(log.task_type == "task_1" for log in logs)
 
 
+def test_get_recent_run_logs_with_status_filter() -> None:
+    """测试按运行状态筛选运行日志。"""
+    from app.run_log import RunStatus, create_run_log, get_recent_run_logs, update_run_log_status
+    from app.storage import initialize_schema, open_sqlite_connection
+
+    database_url = "sqlite:///:memory:"
+
+    with open_sqlite_connection(database_url) as connection:
+        initialize_schema(connection)
+
+        success_log = create_run_log(connection, "data_update")
+        update_run_log_status(connection, success_log.id, RunStatus.SUCCESS)
+        failed_log = create_run_log(connection, "data_update")
+        update_run_log_status(connection, failed_log.id, RunStatus.FAILED)
+        create_run_log(connection, "data_update")
+
+        logs = get_recent_run_logs(connection, limit=10, status=RunStatus.FAILED)
+
+        assert len(logs) == 1
+        assert logs[0].id == failed_log.id
+        assert logs[0].status == RunStatus.FAILED
+
+
 def test_get_recent_run_logs_with_limit() -> None:
     """测试限制返回数量。"""
     from app.run_log import create_run_log, get_recent_run_logs

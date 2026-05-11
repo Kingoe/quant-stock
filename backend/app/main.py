@@ -27,7 +27,7 @@ from app.reports import (
     generate_rebalance_excel,
     generate_weekly_html_report,
 )
-from app.run_log import RunStatus, create_run_log, update_run_log_status
+from app.run_log import RunStatus, create_run_log, get_recent_run_logs, update_run_log_status
 from app.scheduler import scheduler
 from app.simulation import PortfolioSnapshot, analyze_performance, get_execution_summary
 from app.storage import StorageError, initialize_schema, open_sqlite_connection
@@ -121,6 +121,16 @@ class DataUpdateResponse(BaseModel):
     skipped_count: int
     parameters: dict[str, Any]
     error_message: str | None = None
+
+
+class DataUpdateLogItem(BaseModel):
+    id: int | None
+    task_type: str
+    status: str
+    started_at: str | None
+    finished_at: str | None
+    error_message: str | None
+    result: dict[str, Any]
 
 
 class SimulationAccountSummary(BaseModel):
@@ -620,6 +630,61 @@ def update_data(request: DataUpdateRequest) -> Any:
 
     return {
         "data": response.model_dump(),
+        "meta": _meta(),
+    }
+
+
+@app.get("/api/data/update-logs")
+def get_data_update_logs(
+    database_url: str = Query(..., description="数据库 URL"),
+    status: str | None = Query(None, description="运行状态"),
+    limit: int = Query(20, ge=1, le=100, description="返回数量"),
+) -> Any:
+    """获取最近的数据更新任务日志。"""
+    run_status: RunStatus | None = None
+    if status is not None:
+        try:
+            run_status = RunStatus(status)
+        except ValueError:
+            return _error_response(
+                status_code=400,
+                code="invalid_request",
+                message=f"unsupported status: {status}",
+                details={"status": status},
+            )
+
+    try:
+        with open_sqlite_connection(database_url) as connection:
+            initialize_schema(connection)
+            logs = get_recent_run_logs(
+                connection,
+                limit=limit,
+                task_type="data_update",
+                status=run_status,
+            )
+    except StorageError as exc:
+        return _error_response(
+            status_code=400,
+            code="invalid_request",
+            message=str(exc),
+            details={"database_url": database_url},
+        )
+
+    items = [
+        DataUpdateLogItem(
+            id=log.id,
+            task_type=log.task_type,
+            status=log.status.value,
+            started_at=log.started_at,
+            finished_at=log.finished_at,
+            error_message=log.error_message,
+            result=log.result,
+        )
+        for log in logs
+    ]
+
+    return {
+        "data": [item.model_dump() for item in items],
         "meta": _meta(),
     }
 
