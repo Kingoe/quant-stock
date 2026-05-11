@@ -28,4 +28,14 @@ describe('App workspace navigation', () => {
 
     expect(screen.getByRole('heading', { name: '实验记录' })).toBeInTheDocument()
   })
+
+  it('switches to the notifications page', async () => {
+    const user = userEvent.setup()
+
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: '通知历史' }))
+
+    expect(screen.getByRole('heading', { name: '通知历史' })).toBeInTheDocument()
+  })
 })

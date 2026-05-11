@@ -108,6 +108,18 @@ export interface ParameterExperimentData {
   created_at: string
 }
 
+export interface NotificationRecordData {
+  id: number
+  channel: string
+  title: string
+  content: string
+  level: string
+  metadata: Record<string, unknown>
+  status: string
+  error_message: string | null
+  created_at: string
+}
+
 export const getDataStatus = async (): Promise<{ data: DataStatus; meta: ApiMeta }> => {
   try {
     const response = await axios.get(`${API_BASE_URL}/data/status`)
@@ -298,6 +310,27 @@ export const getExperiments = async (): Promise<{
     return response.data
   } catch (error) {
     console.error('Failed to fetch experiments:', error)
+    return {
+      data: [],
+      meta: { fallback: true },
+    }
+  }
+}
+
+export const getNotifications = async (): Promise<{
+  data: NotificationRecordData[]
+  meta: ApiMeta
+}> => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/notifications`, {
+      params: {
+        database_url: 'sqlite:///../data/quant.db',
+        limit: 20,
+      },
+    })
+    return response.data
+  } catch (error) {
+    console.error('Failed to fetch notifications:', error)
     return {
       data: [],
       meta: { fallback: true },
