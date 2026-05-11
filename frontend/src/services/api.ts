@@ -120,6 +120,14 @@ export interface NotificationRecordData {
   created_at: string
 }
 
+export interface BrokerReadinessData {
+  status: string
+  ready_for_manual_pilot: boolean
+  failed_reasons: string[]
+  allowed_actions: string[]
+  trade_boundary: string
+}
+
 export const getDataStatus = async (): Promise<{ data: DataStatus; meta: ApiMeta }> => {
   try {
     const response = await axios.get(`${API_BASE_URL}/data/status`)
@@ -333,6 +341,30 @@ export const getNotifications = async (): Promise<{
     console.error('Failed to fetch notifications:', error)
     return {
       data: [],
+      meta: { fallback: true },
+    }
+  }
+}
+
+export const getBrokerReadiness = async (): Promise<{
+  data: BrokerReadinessData
+  meta: ApiMeta
+}> => {
+  const fallbackData: BrokerReadinessData = {
+    status: 'blocked',
+    ready_for_manual_pilot: false,
+    failed_reasons: ['接口不可用，请检查后端服务'],
+    allowed_actions: ['read_account', 'read_positions', 'read_orders'],
+    trade_boundary: '不是实盘交易入口，仅用于人工小资金试点评审。',
+  }
+
+  try {
+    const response = await axios.get(`${API_BASE_URL}/broker/readiness`)
+    return response.data
+  } catch (error) {
+    console.error('Failed to fetch broker readiness:', error)
+    return {
+      data: fallbackData,
       meta: { fallback: true },
     }
   }

@@ -7,6 +7,7 @@ import Config from './pages/Config'
 import Status from './pages/Status'
 import Experiments from './pages/Experiments'
 import Notifications from './pages/Notifications'
+import BrokerReadiness from './pages/BrokerReadiness'
 import './index.css'
 
 type Page =
@@ -18,6 +19,7 @@ type Page =
   | 'status'
   | 'experiments'
   | 'notifications'
+  | 'broker-readiness'
 
 function App() {
   const [currentPage, setCurrentPage] = useState<Page>('overview')
@@ -40,6 +42,8 @@ function App() {
         return <Experiments />
       case 'notifications':
         return <Notifications />
+      case 'broker-readiness':
+        return <BrokerReadiness />
       default:
         return <Overview />
     }
@@ -54,6 +58,7 @@ function App() {
     { key: 'status' as Page, label: '数据状态' },
     { key: 'experiments' as Page, label: '实验记录' },
     { key: 'notifications' as Page, label: '通知历史' },
+    { key: 'broker-readiness' as Page, label: '券商准入' },
   ]
 
   return (
