@@ -539,6 +539,7 @@ def run_weekly_strategy(
 @app.post("/api/data/update")
 def update_data(request: DataUpdateRequest) -> Any:
     """手动触发数据更新任务。"""
+    log_result = _data_update_log_result(request)
     try:
         with open_sqlite_connection(request.database_url) as connection:
             initialize_schema(connection)
@@ -546,7 +547,7 @@ def update_data(request: DataUpdateRequest) -> Any:
             if log.id is None:
                 raise HTTPException(status_code=500, detail="failed to create run log")
 
-            update_run_log_status(connection, log.id, RunStatus.RUNNING)
+            update_run_log_status(connection, log.id, RunStatus.RUNNING, result=log_result)
 
             try:
                 provider = _create_data_provider(request)
@@ -569,6 +570,7 @@ def update_data(request: DataUpdateRequest) -> Any:
                     log.id,
                     RunStatus.FAILED,
                     error_message=error_message,
+                    result=log_result,
                 )
                 return _error_response(
                     status_code=400,
@@ -583,6 +585,7 @@ def update_data(request: DataUpdateRequest) -> Any:
                     log.id,
                     RunStatus.FAILED,
                     error_message=error_message,
+                    result=log_result,
                 )
                 return _error_response(
                     status_code=502,
@@ -597,6 +600,7 @@ def update_data(request: DataUpdateRequest) -> Any:
                     log.id,
                     RunStatus.FAILED,
                     error_message=error_message,
+                    result=log_result,
                 )
                 return _error_response(
                     status_code=500,
@@ -631,6 +635,24 @@ def update_data(request: DataUpdateRequest) -> Any:
     return {
         "data": response.model_dump(),
         "meta": _meta(),
+    }
+
+
+def _data_update_log_result(request: DataUpdateRequest) -> dict[str, Any]:
+    parameters: dict[str, Any] = {}
+    for key in ("start_date", "end_date", "trade_date", "index_code"):
+        value = getattr(request, key)
+        if value is not None:
+            parameters[key] = value
+    if request.stock_codes:
+        parameters["stock_codes"] = request.stock_codes
+
+    return {
+        "data_type": request.data_type,
+        "source": request.source,
+        "records_count": 0,
+        "skipped_count": 0,
+        "parameters": parameters,
     }
 
 

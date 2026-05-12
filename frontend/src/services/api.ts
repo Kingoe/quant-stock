@@ -128,6 +128,22 @@ export interface BrokerReadinessData {
   trade_boundary: string
 }
 
+export interface DataUpdateLogData {
+  id: number | null
+  task_type: string
+  status: string
+  started_at: string | null
+  finished_at: string | null
+  error_message: string | null
+  result: {
+    data_type?: string
+    source?: string
+    records_count?: number
+    skipped_count?: number
+    [key: string]: unknown
+  }
+}
+
 export const getDataStatus = async (): Promise<{ data: DataStatus; meta: ApiMeta }> => {
   try {
     const response = await axios.get(`${API_BASE_URL}/data/status`)
@@ -365,6 +381,30 @@ export const getBrokerReadiness = async (): Promise<{
     console.error('Failed to fetch broker readiness:', error)
     return {
       data: fallbackData,
+      meta: { fallback: true },
+    }
+  }
+}
+
+export const getDataUpdateLogs = async (
+  status?: string,
+): Promise<{
+  data: DataUpdateLogData[]
+  meta: ApiMeta
+}> => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/data/update-logs`, {
+      params: {
+        database_url: 'sqlite:///../data/quant.db',
+        limit: 20,
+        ...(status ? { status } : {}),
+      },
+    })
+    return response.data
+  } catch (error) {
+    console.error('Failed to fetch data update logs:', error)
+    return {
+      data: [],
       meta: { fallback: true },
     }
   }

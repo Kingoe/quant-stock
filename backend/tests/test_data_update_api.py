@@ -348,6 +348,9 @@ def test_data_update_endpoint_marks_failed_log_for_unsupported_data_type(tmp_pat
     assert len(logs) == 1
     assert logs[0].status == RunStatus.FAILED
     assert "unsupported data_type" in logs[0].error_message
+    assert logs[0].result["data_type"] == "not_supported"
+    assert logs[0].result["source"] == "local_csv"
+    assert logs[0].result["records_count"] == 0
 
 
 def test_data_update_endpoint_returns_structured_error_for_missing_required_body() -> None:

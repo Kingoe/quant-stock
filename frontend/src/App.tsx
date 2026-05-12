@@ -62,18 +62,18 @@ function App() {
   ]
 
   return (
-    <div className="flex min-h-screen bg-white">
-      <aside className="w-64 bg-gray-50 border-r border-gray-200 flex flex-col">
-        <div className="p-6 border-b border-gray-200">
+    <div className="flex min-h-screen flex-col bg-white md:flex-row">
+      <aside className="w-full bg-gray-50 border-b border-gray-200 flex flex-col md:w-64 md:border-b-0 md:border-r">
+        <div className="p-4 border-b border-gray-200 md:p-6">
           <h1 className="text-xl font-semibold text-gray-900">量化选股辅助系统</h1>
         </div>
-        <nav className="flex-1 p-4">
-          <ul className="space-y-1">
+        <nav className="p-3 md:flex-1 md:p-4">
+          <ul className="flex gap-1 overflow-x-auto md:block md:space-y-1">
             {navItems.map((item) => (
-              <li key={item.key}>
+              <li key={item.key} className="shrink-0 md:shrink">
                 <button
                   onClick={() => setCurrentPage(item.key)}
-                  className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
+                  className={`w-full whitespace-nowrap text-left px-4 py-2 rounded-lg transition-colors ${
                     currentPage === item.key
                       ? 'bg-indigo-50 text-indigo-600 font-medium'
                       : 'text-gray-600 hover:bg-gray-100'
@@ -86,7 +86,7 @@ function App() {
           </ul>
         </nav>
       </aside>
-      <main className="flex-1 p-8">
+      <main className="flex-1 p-4 md:p-8">
         {renderPage()}
       </main>
     </div>
