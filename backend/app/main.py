@@ -15,6 +15,7 @@ from app.data import (
     DataUpdateCommand,
     DataUpdateError,
     LocalCsvProvider,
+    generate_data_quality_report,
     get_stock,
     get_universe_stock_codes,
     run_data_update,
@@ -133,6 +134,20 @@ class DataUpdateLogItem(BaseModel):
     result: dict[str, Any]
 
 
+class DataQualityIssueItem(BaseModel):
+    level: str
+    code: str
+    message: str
+    details: dict[str, Any]
+
+
+class DataQualityReportResponse(BaseModel):
+    status: str
+    score_date: str
+    summary: dict[str, int]
+    issues: list[DataQualityIssueItem]
+
+
 class SimulationAccountSummary(BaseModel):
     latest_value: float
     cash: float
@@ -205,6 +220,16 @@ def _error_response(
             "meta": _meta(),
         },
     )
+
+
+def _is_iso_date(value: str) -> bool:
+    if len(value) != 10 or value[4] != "-" or value[7] != "-":
+        return False
+    try:
+        datetime.strptime(value, "%Y-%m-%d")
+    except ValueError:
+        return False
+    return True
 
 
 def _create_data_provider(request: DataUpdateRequest) -> DataProvider:
@@ -707,6 +732,53 @@ def get_data_update_logs(
 
     return {
         "data": [item.model_dump() for item in items],
+        "meta": _meta(),
+    }
+
+
+@app.get("/api/data/quality-report")
+def get_data_quality_report(
+    database_url: str = Query(..., description="数据库 URL"),
+    score_date: str = Query(..., description="评分日期"),
+) -> Any:
+    """获取指定评分日的数据质量检查报告。"""
+    if not _is_iso_date(score_date):
+        return _error_response(
+            status_code=400,
+            code="invalid_request",
+            message="score_date 必须是 YYYY-MM-DD 格式。",
+            details={"score_date": score_date},
+        )
+
+    try:
+        with open_sqlite_connection(database_url) as connection:
+            initialize_schema(connection)
+            report = generate_data_quality_report(connection, score_date=score_date)
+    except StorageError as exc:
+        return _error_response(
+            status_code=400,
+            code="invalid_request",
+            message=str(exc),
+            details={"database_url": database_url},
+        )
+
+    data = DataQualityReportResponse(
+        status=report.status,
+        score_date=report.score_date,
+        summary=report.summary,
+        issues=[
+            DataQualityIssueItem(
+                level=issue.level,
+                code=issue.code,
+                message=issue.message,
+                details=issue.details,
+            )
+            for issue in report.issues
+        ],
+    )
+
+    return {
+        "data": data.model_dump(),
         "meta": _meta(),
     }
 

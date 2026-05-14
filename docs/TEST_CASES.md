@@ -186,6 +186,8 @@
 - `POST /api/data/update` 请求参数错误时应返回结构化 `error + meta` 响应。
 - `GET /api/data/update-logs` 返回最近数据更新任务日志，并遵守 `data + meta` 成功响应约定。
 - `GET /api/data/update-logs` 状态参数非法时应返回结构化 `error + meta` 响应。
+- `GET /api/data/quality-report` 返回数据质量报告，并遵守 `data + meta` 成功响应约定。
+- `GET /api/data/quality-report` 数据库 URL 非法时应返回结构化 `error + meta` 响应。
 
 ## 11. 前端测试
 
@@ -223,6 +225,7 @@
 - 数据更新日志 API 应支持数量限制和状态过滤，并只返回数据更新任务日志。
 - 数据质量检查应覆盖空库、正常、缺失、过期和异常字段。
 - 财务数据质量检查必须验证披露日期，避免未来函数。
+- 数据质量报告应输出 error、warning、info 汇总和结构化问题列表。
 - 策略运行前置检查存在 error 时必须阻止运行。
 - 策略运行前置检查只有 warning 时允许运行但必须返回风险提示。
 - 一键完整周报流程必须在前置检查失败时停止并返回原因。

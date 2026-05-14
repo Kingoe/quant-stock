@@ -46,6 +46,11 @@ from app.data.providers import (
     DataProviderError,
     LocalCsvProvider,
 )
+from app.data.quality import (
+    DataQualityIssue,
+    DataQualityReport,
+    generate_data_quality_report,
+)
 from app.data.status import (
     get_data_status,
     get_latest_date_by_type,
@@ -93,6 +98,8 @@ __all__ = [
     "AkShareProvider",
     "DataProvider",
     "DataProviderError",
+    "DataQualityIssue",
+    "DataQualityReport",
     "DataUpdateCommand",
     "DataUpdateError",
     "DataUpdateResult",
@@ -123,6 +130,7 @@ __all__ = [
     "get_aligned_valuation",
     "get_daily_prices",
     "get_data_status",
+    "generate_data_quality_report",
     "get_financial_metrics",
     "get_index_constituents",
     "get_latest_date_by_type",
