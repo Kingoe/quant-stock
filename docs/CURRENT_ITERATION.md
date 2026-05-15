@@ -5,31 +5,31 @@
 ## 当前状态
 
 - 当前阶段：数据运营增强
-- 当前任务：M12-6 增加策略运行前置检查
+- 当前任务：M12-7 增加一键生成本周完整报告流程
 - 任务来源：按 `docs/TASK_PLAN.md` 的最早未完成任务顺序推进
-- 对任务顺序的影响：M12-6 已补齐，下一轮进入 M12-7
-- 当前结果：已完成，新增 `GET /api/strategy/preflight`，并在手动运行本周策略前执行前置检查
+- 对任务顺序的影响：M12-7 已补齐，M12 数据运营增强任务全部完成
+- 当前结果：已完成，新增 `POST /api/reports/weekly-full`，串联前置检查、调仓建议、报告摘要和本地通知
 
 ## 本轮验收标准
 
 本轮完成必须满足：
 
-- 新增 `GET /api/strategy/preflight`，按评分日输出策略运行前置检查结果。
-- 前置检查存在 error 时返回 `blocked` 并阻止策略运行。
-- 前置检查只有 warning 时返回 `warning`，允许策略运行并返回风险提示。
-- 前置检查完全通过时返回 `passed`。
-- `POST /api/jobs/run-weekly-strategy` 运行前必须调用前置检查。
-- 前置检查结果必须写入手动策略运行响应和运行日志。
-- `docs/TASK_PLAN.md` 将 M12-6 标记为 Done，并把最早未完成任务更新为 M12-7。
+- 新增 `POST /api/reports/weekly-full`，一键生成本周完整报告流程。
+- 完整周报流程必须先执行策略前置检查。
+- 前置检查失败时必须停止流程，不生成调仓建议和报告。
+- 完整周报成功时返回前置检查结果、调仓建议数量、action 统计和 HTML/CSV/Excel 报告摘要。
+- 完整周报成功时写入本地通知，运行日志记录报告摘要和通知结果。
+- `docs/TASK_PLAN.md` 将 M12-7 标记为 Done，并记录 M12 数据运营增强任务全部完成。
 - `docs/CHANGELOG.md` 记录本轮完成结果。
-- `docs/TEST_CASES.md` 补充策略前置检查测试要求。
+- `docs/TEST_CASES.md` 补充完整周报流程测试要求。
 - Git 工作区提交后保持干净。
 
 ## 本轮验证方式
 
 本轮验证方式：
 
-- 运行 `uv run pytest tests/test_strategy_preflight.py tests/test_strategy_preflight_api.py tests/test_run_weekly_strategy_api.py -q`。
+- 运行 `uv run pytest tests/test_weekly_full_report_api.py -q`。
+- 运行报告、通知和前置检查相关测试。
 - 运行后端全量测试和 ruff 检查。
 - 运行前端测试、lint 和构建，确认本轮未破坏前端。
 - 运行 `git diff --check`。
@@ -38,6 +38,6 @@
 
 ## 下一轮建议
 
-下一轮按最早未完成任务继续：
+下一轮建议：
 
-- M12-7 增加一键生成本周完整报告流程。
+- 复盘 M12 数据运营增强整体闭环，规划下一阶段是否进入前端展示完整周报流程、真实样例数据导入或部署运行说明。

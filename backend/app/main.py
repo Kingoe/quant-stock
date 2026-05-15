@@ -21,9 +21,15 @@ from app.data import (
     run_data_update,
 )
 from app.experiments import get_parameter_experiment, list_parameter_experiments
-from app.notifications import list_notifications
+from app.notifications import (
+    DatabaseNotificationChannel,
+    NotificationMessage,
+    list_notifications,
+    send_notification,
+)
 from app.portfolio import generate_weekly_rebalance
 from app.reports import (
+    build_weekly_html_report,
     generate_rebalance_csv,
     generate_rebalance_excel,
     generate_weekly_html_report,
@@ -100,6 +106,17 @@ class RunWeeklyStrategyResult(BaseModel):
     recommendations_count: int
     action_counts: dict[str, int]
     preflight: dict[str, Any]
+    error_message: str | None = None
+
+
+class WeeklyFullReportResult(BaseModel):
+    log_id: int | None
+    status: str
+    preflight: dict[str, Any]
+    recommendations_count: int
+    action_counts: dict[str, int]
+    artifacts: dict[str, dict[str, Any]]
+    notification_results: list[dict[str, Any]]
     error_message: str | None = None
 
 
@@ -261,6 +278,49 @@ def _strategy_preflight_response(preflight: StrategyPreflightResult) -> Strategy
         blocking_issues=[_data_quality_issue_item(issue) for issue in preflight.blocking_issues],
         warning_issues=[_data_quality_issue_item(issue) for issue in preflight.warning_issues],
     )
+
+
+def _action_counts(recommendations: list[Any]) -> dict[str, int]:
+    action_counts = {"buy": 0, "hold": 0, "sell": 0, "watch": 0}
+    for item in recommendations:
+        if item.action in action_counts:
+            action_counts[item.action] += 1
+    return action_counts
+
+
+def _build_report_artifacts(
+    score_date: str, recommendations: list[Any]
+) -> dict[str, dict[str, Any]]:
+    html = build_weekly_html_report(score_date, recommendations)
+    csv_content = generate_rebalance_csv(recommendations)
+    excel_file = generate_rebalance_excel(recommendations)
+    excel_bytes = excel_file.getvalue()
+
+    return {
+        "html": {
+            "filename": f"rebalance_{score_date}.html",
+            "bytes": len(html.encode("utf-8")),
+        },
+        "csv": {
+            "filename": f"rebalance_{score_date}.csv",
+            "bytes": len(csv_content.encode("utf-8")),
+        },
+        "excel": {
+            "filename": f"rebalance_{score_date}.xlsx",
+            "bytes": len(excel_bytes),
+        },
+    }
+
+
+def _notification_result_items(results: list[Any]) -> list[dict[str, Any]]:
+    return [
+        {
+            "channel": result.channel,
+            "success": result.success,
+            "error_message": result.error_message,
+        }
+        for result in results
+    ]
 
 
 def _create_data_provider(request: DataUpdateRequest) -> DataProvider:
@@ -584,10 +644,7 @@ def run_weekly_strategy(
                 result=failed_result,
             )
         else:
-            action_counts = {"buy": 0, "hold": 0, "sell": 0, "watch": 0}
-            for item in recommendations:
-                if item.action in action_counts:
-                    action_counts[item.action] += 1
+            action_counts = _action_counts(recommendations)
 
             result = {
                 "recommendations_count": len(recommendations),
@@ -612,6 +669,137 @@ def run_weekly_strategy(
             request_id="local-dev",
             generated_at=datetime.now(ZoneInfo("Asia/Shanghai")).isoformat(),
         ).model_dump(),
+    }
+
+
+@app.post("/api/reports/weekly-full")
+def generate_weekly_full_report(
+    index_code: str = Query("000906", description="指数代码"),
+    score_date: str = Query(..., description="评分日期"),
+    database_url: str = Query(..., description="数据库 URL"),
+    limit: int = Query(15, ge=1, le=50, description="候选股数量"),
+    single_stock_max_weight: float = Query(0.08, gt=0, le=1, description="单票最大仓位"),
+    industry_max_weight: float = Query(0.3, gt=0, le=1, description="行业最大仓位"),
+) -> Any:
+    """一键生成本周完整报告。"""
+    if not _is_iso_date(score_date):
+        return _error_response(
+            status_code=400,
+            code="invalid_request",
+            message="score_date 必须是 YYYY-MM-DD 格式。",
+            details={"score_date": score_date},
+        )
+
+    error_message: str | None = None
+    data: WeeklyFullReportResult | None = None
+    preflight_data: dict[str, Any] | None = None
+
+    try:
+        with open_sqlite_connection(database_url) as connection:
+            initialize_schema(connection)
+            log = create_run_log(connection, "weekly_full_report")
+            if log.id is None:
+                raise HTTPException(status_code=500, detail="failed to create run log")
+
+            update_run_log_status(connection, log.id, RunStatus.RUNNING)
+
+            try:
+                preflight = generate_strategy_preflight(connection, score_date=score_date)
+                preflight_data = _strategy_preflight_response(preflight).model_dump()
+                if not preflight.can_run:
+                    error_message = "策略运行前置检查未通过，完整周报流程已停止。"
+                    update_run_log_status(
+                        connection,
+                        log.id,
+                        RunStatus.FAILED,
+                        error_message=error_message,
+                        result={"preflight": preflight_data},
+                    )
+                    return _error_response(
+                        status_code=400,
+                        code="preflight_failed",
+                        message=error_message,
+                        details={"preflight": preflight_data},
+                    )
+
+                recommendations = generate_weekly_rebalance(
+                    connection,
+                    index_code,
+                    score_date,
+                    limit=limit,
+                    single_stock_max_weight=single_stock_max_weight,
+                    industry_max_weight=industry_max_weight,
+                    current_positions=None,
+                )
+                action_counts = _action_counts(recommendations)
+                artifacts = _build_report_artifacts(score_date, recommendations)
+                notification_content = (
+                    f"{score_date} 完整周报已生成，调仓建议 {len(recommendations)} 条。"
+                )
+                notification_results = _notification_result_items(
+                    send_notification(
+                        NotificationMessage(
+                            title="本周完整报告已生成",
+                            content=notification_content,
+                            level="info" if preflight.status == "passed" else "warning",
+                            metadata={
+                                "score_date": score_date,
+                                "preflight_status": preflight.status,
+                                "recommendations_count": len(recommendations),
+                                "action_counts": action_counts,
+                                "artifacts": artifacts,
+                            },
+                        ),
+                        [
+                            DatabaseNotificationChannel(
+                                connection,
+                                channel_name="weekly_full_report",
+                            )
+                        ],
+                    )
+                )
+
+                result = {
+                    "preflight": preflight_data,
+                    "recommendations_count": len(recommendations),
+                    "action_counts": action_counts,
+                    "artifacts": artifacts,
+                    "notification_results": notification_results,
+                }
+                update_run_log_status(connection, log.id, RunStatus.SUCCESS, result=result)
+                data = WeeklyFullReportResult(
+                    log_id=log.id,
+                    status="success",
+                    preflight=preflight_data,
+                    recommendations_count=len(recommendations),
+                    action_counts=action_counts,
+                    artifacts=artifacts,
+                    notification_results=notification_results,
+                )
+            except Exception as exc:
+                error_message = str(exc)
+                failed_result = {"preflight": preflight_data} if preflight_data else None
+                update_run_log_status(
+                    connection,
+                    log.id,
+                    RunStatus.FAILED,
+                    error_message=error_message,
+                    result=failed_result,
+                )
+    except StorageError as exc:
+        return _error_response(
+            status_code=400,
+            code="invalid_request",
+            message=str(exc),
+            details={"database_url": database_url},
+        )
+
+    if error_message is not None:
+        raise HTTPException(status_code=500, detail=error_message)
+
+    return {
+        "data": data.model_dump() if data else None,
+        "meta": _meta(),
     }
 
 

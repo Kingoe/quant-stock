@@ -191,6 +191,9 @@
 - `GET /api/strategy/preflight` 返回策略前置检查结果，并遵守 `data + meta` 成功响应约定。
 - `GET /api/strategy/preflight` 评分日非法时应返回结构化 `error + meta` 响应。
 - `POST /api/jobs/run-weekly-strategy` 前置检查失败时应返回结构化 `error + meta` 响应，并不能继续生成调仓建议。
+- `POST /api/reports/weekly-full` 成功时应返回前置检查、调仓统计、报告摘要、通知结果和运行日志 ID。
+- `POST /api/reports/weekly-full` 前置检查失败时应返回结构化 `error + meta` 响应，并不能继续生成调仓建议和报告。
+- `POST /api/reports/weekly-full` 评分日非法时应返回结构化 `error + meta` 响应。
 
 ## 11. 前端测试
 
@@ -233,6 +236,7 @@
 - 策略运行前置检查只有 warning 时允许运行但必须返回风险提示。
 - 策略运行前置检查完全通过时应允许策略运行，并把检查结果写入响应和运行日志。
 - 一键完整周报流程必须在前置检查失败时停止并返回原因。
+- 一键完整周报流程成功时必须写入本地通知，并在运行日志中记录报告摘要。
 - 数据状态页面应展示更新日志和质量检查问题。
 
 ## 14. 人工验收

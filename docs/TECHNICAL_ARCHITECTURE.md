@@ -293,6 +293,7 @@ GET  /api/data/update-logs
 GET  /api/data/quality-report
 GET  /api/strategy/preflight
 POST /api/jobs/run-weekly-strategy
+POST /api/reports/weekly-full
 GET  /api/exports/latest
 ```
 
@@ -305,6 +306,8 @@ GET  /api/exports/latest
 `GET /api/strategy/preflight` 用于运行策略前检查关键数据质量，返回 `passed`、`warning` 或 `blocked`。存在 error 时阻止策略运行；只有 warning 时允许继续，但需要在响应和运行日志中保留风险提示。
 
 `POST /api/jobs/run-weekly-strategy` 用于本地手动触发本周策略，不连接券商，不产生真实订单。接口会先执行策略前置检查，阻止项存在时返回结构化错误并写入失败日志；成功时返回调仓建议数量、action 统计和前置检查结果。
+
+`POST /api/reports/weekly-full` 用于一键生成本周完整报告流程，串联策略前置检查、调仓建议、HTML/CSV/Excel 报告摘要和本地通知。前置检查失败时停止流程并写入失败日志；成功时返回报告文件名、大小摘要、通知结果和运行日志 ID。
 
 `GET /api/simulation/summary` 用于总览页展示模拟运行状态，读取本地组合快照和信号执行记录，返回模拟资产、收益、回撤、波动率和信号执行摘要。该接口只展示本地模拟结果，不代表真实账户资产。
 

@@ -38,11 +38,11 @@ def generate_weekly_html_report(
             industry_max_weight=industry_max_weight,
         )
 
-    html = _build_html_report(score_date, recommendations)
+    html = build_weekly_html_report(score_date, recommendations)
     return html
 
 
-def _build_html_report(score_date: str, recommendations: list) -> str:
+def build_weekly_html_report(score_date: str, recommendations: list) -> str:
     """构建 HTML 报告。
 
     Args:
