@@ -188,6 +188,9 @@
 - `GET /api/data/update-logs` 状态参数非法时应返回结构化 `error + meta` 响应。
 - `GET /api/data/quality-report` 返回数据质量报告，并遵守 `data + meta` 成功响应约定。
 - `GET /api/data/quality-report` 数据库 URL 非法时应返回结构化 `error + meta` 响应。
+- `GET /api/strategy/preflight` 返回策略前置检查结果，并遵守 `data + meta` 成功响应约定。
+- `GET /api/strategy/preflight` 评分日非法时应返回结构化 `error + meta` 响应。
+- `POST /api/jobs/run-weekly-strategy` 前置检查失败时应返回结构化 `error + meta` 响应，并不能继续生成调仓建议。
 
 ## 11. 前端测试
 
@@ -228,6 +231,7 @@
 - 数据质量报告应输出 error、warning、info 汇总和结构化问题列表。
 - 策略运行前置检查存在 error 时必须阻止运行。
 - 策略运行前置检查只有 warning 时允许运行但必须返回风险提示。
+- 策略运行前置检查完全通过时应允许策略运行，并把检查结果写入响应和运行日志。
 - 一键完整周报流程必须在前置检查失败时停止并返回原因。
 - 数据状态页面应展示更新日志和质量检查问题。
 
